@@ -91,10 +91,16 @@ vim.opt.backup = false
 vim.opt.writebackup = false
 vim.opt.swapfile = false
 
--- But store temp files in specific directories
-vim.opt.directory = vim.fn.expand('~/.config/nvim/temp_dirs/swp//')
-vim.opt.backupdir = vim.fn.expand('~/.config/nvim/temp_dirs/bkup//')
-vim.opt.undodir = vim.fn.expand('~/.config/nvim/temp_dirs/undodir//')
+-- Use XDG-compliant state directory for temporary files
+-- The // suffix preserves full file paths in the filename to avoid collisions
+vim.opt.directory = vim.fn.stdpath("state") .. "/swap//"
+vim.opt.backupdir = vim.fn.stdpath("state") .. "/backup//"
+vim.opt.undodir = vim.fn.stdpath("state") .. "/undo//"
+
+-- Ensure directories exist
+vim.fn.mkdir(vim.fn.stdpath("state") .. "/swap", "p")
+vim.fn.mkdir(vim.fn.stdpath("state") .. "/backup", "p")
+vim.fn.mkdir(vim.fn.stdpath("state") .. "/undo", "p")
 
 -- Persistent undo
 vim.opt.undofile = true

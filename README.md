@@ -66,12 +66,15 @@ nvim
 │   └── utils/                # Utility functions
 │       ├── helpers.lua       # General helper functions
 │       └── buffer.lua        # Buffer manipulation utilities
-│
-└── temp_dirs/                # Temporary files (swap, backup, undo, sessions)
-    ├── swap/
-    ├── backup/
-    ├── undo/
-    └── sessions/
+```
+
+**Note:** Temporary files (swap, backup, undo, sessions) are stored in XDG-compliant state directory:
+```
+~/.local/state/nvim/
+├── swap/                     # Swap files (crash recovery)
+├── backup/                   # Backup files
+├── undo/                     # Persistent undo history
+└── sessions/                 # Session files
 ```
 
 ---
@@ -408,7 +411,7 @@ The verilog formatter has been refactored (2026-02-05) with significant improvem
 - `F11` - Load session
 - `F12` - Save session
 
-Sessions saved to `~/.config/nvim/temp_dirs/sessions/`
+Sessions saved to `~/.local/state/nvim/sessions/`
 
 ---
 
@@ -420,8 +423,8 @@ Sessions saved to `~/.config/nvim/temp_dirs/sessions/`
 
 ### Temporary Directories
 
-All temporary files stored in `~/.config/nvim/temp_dirs/`:
-- **swap/** - Swap files
+All temporary files stored in XDG-compliant state directory `~/.local/state/nvim/`:
+- **swap/** - Swap files (crash recovery)
 - **backup/** - Backup files
 - **undo/** - Persistent undo history
 - **sessions/** - Session files
@@ -748,11 +751,11 @@ If indent behaves unexpectedly, check:
 - **Plugin modifications:** `~/.local/share/nvim/lazy/<plugin-name>/`
 
 ### Temporary Files
-- **All temp files:** `~/.config/nvim/temp_dirs/`
-- **Swap:** `~/.config/nvim/temp_dirs/swap/`
-- **Backup:** `~/.config/nvim/temp_dirs/backup/`
-- **Undo:** `~/.config/nvim/temp_dirs/undo/`
-- **Sessions:** `~/.config/nvim/temp_dirs/sessions/`
+- **All temp files:** `~/.local/state/nvim/`
+- **Swap:** `~/.local/state/nvim/swap/`
+- **Backup:** `~/.local/state/nvim/backup/`
+- **Undo:** `~/.local/state/nvim/undo/`
+- **Sessions:** `~/.local/state/nvim/sessions/`
 
 ---
 
@@ -841,8 +844,25 @@ git push -u origin master
 - Any other config files
 
 **Exclude from git:** (add to `.gitignore`)
-- `temp_dirs/` - Temporary files
 - `lazy-lock.json` - Optional (locks plugin versions)
+
+**Note:** Temporary files (swap, backup, undo, sessions) are now stored in `~/.local/state/nvim/` following XDG Base Directory standards and are automatically excluded from git.
+
+---
+
+## XDG Base Directory Compliance
+
+This configuration follows the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html):
+
+- **Config** (`~/.config/nvim/`): Configuration files (version-controlled)
+- **Data** (`~/.local/share/nvim/`): Persistent data (plugins via lazy.nvim, LSP servers via Mason)
+- **State** (`~/.local/state/nvim/`): Temporary/state files (swap, backup, undo, sessions)
+
+This separation ensures:
+✓ Clean version control (no temporary files in git)
+✓ Better portability (config can be synced across machines)
+✓ Standards compliance (follows Linux filesystem conventions)
+✓ Consistency (matches Neovim's built-in behavior for shada, lazy, etc.)
 
 ---
 

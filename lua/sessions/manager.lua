@@ -6,6 +6,13 @@ local M = {}
 M.session_loaded = false
 M.session_name = ""
 
+-- Helper to get session directory using XDG state path
+local function get_session_dir()
+    local session_dir = vim.fn.stdpath("state") .. "/sessions"
+    vim.fn.mkdir(session_dir, "p")
+    return session_dir
+end
+
 -- Get session name from servername
 local function get_server_session_name()
     local servername = vim.v.servername
@@ -19,7 +26,7 @@ local function get_server_session_name()
                 servername = session_id
             end
         end
-        return vim.fn.tolower(vim.fn.expand("~/.config/nvim/temp_dirs/sessions/") .. servername)
+        return vim.fn.tolower(get_session_dir() .. "/" .. servername)
     end
     return nil
 end
@@ -67,7 +74,7 @@ end
 function M.get_session_name()
     M.session_name = vim.fn.input('Enter Session Name: ')
     if M.session_name ~= "" then
-        M.session_name = vim.fn.expand("~/.config/nvim/temp_dirs/sessions/") .. M.session_name
+        M.session_name = get_session_dir() .. "/" .. M.session_name
         print("Session is: " .. M.session_name)
     end
 end
@@ -75,7 +82,7 @@ end
 -- Auto-save on close
 function M.save_session_on_close()
     if M.session_name == "" then
-        M.session_name = vim.fn.expand("~/.config/nvim/temp_dirs/sessions/lastsession")
+        M.session_name = get_session_dir() .. "/lastsession"
     end
     M.save_session()
 end

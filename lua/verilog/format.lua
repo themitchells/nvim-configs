@@ -190,6 +190,11 @@ end
 
 -- Main formatting function - formats a single line for Verilog instance
 function M.format_to_instance_line()
+    -- Save original state to detect if changes were actually made
+    local original_line = vim.fn.getline('.')
+    local was_modified = vim.bo.modified
+    local changenr_before = vim.fn.changenr()
+
     -- Save wrap setting
     local mywrap = vim.wo.wrap
     vim.wo.wrap = false
@@ -368,6 +373,16 @@ function M.format_to_instance_line()
 
     -- Fix indentation
     normal('==')
+
+    -- If nothing actually changed, undo to clear modified flag
+    local final_line = vim.fn.getline('.')
+    if final_line == original_line and not was_modified then
+        -- Undo all changes made by this function
+        local changenr_after = vim.fn.changenr()
+        if changenr_after > changenr_before then
+            vim.cmd('silent! undo ' .. changenr_before)
+        end
+    end
 end
 
 -- Format entire instance (calls format_to_instance_line repeatedly)

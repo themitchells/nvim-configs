@@ -15,6 +15,7 @@ vim.keymap.set('n', '<S-Tab>', '<C-W>w', { desc = "Cycle windows" })
 vim.keymap.set('n', '<leader>bd', ':lua require("utils.buffer").buf_close()<cr>', { desc = "Close buffer intelligently" })
 
 -- Function key mappings
+vim.keymap.set('n', '<F2>', ':set wrap!<cr>', { desc = "Toggle line wrap" })
 vim.keymap.set('n', '<F5>', ':lua require("utils.helpers").git_diff()<cr>', { desc = "Git diff current file" })
 vim.keymap.set('n', '<F7>', ':!chmod a+x %<cr>', { desc = "Make file executable" })
 

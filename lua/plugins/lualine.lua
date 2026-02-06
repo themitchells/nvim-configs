@@ -84,7 +84,17 @@ return {
                 'filetype',
             },
             lualine_y = {'progress'},
-            lualine_z = {'location'}
+            lualine_z = {
+                {
+                    -- Show row/total_rows:column (like airline)
+                    function()
+                        local line = vim.fn.line('.')
+                        local total = vim.fn.line('$')
+                        local col = vim.fn.col('.')
+                        return string.format('%d/%d:%d', line, total, col)
+                    end,
+                }
+            }
         },
         inactive_sections = {
             lualine_a = {},

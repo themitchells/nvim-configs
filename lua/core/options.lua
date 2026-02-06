@@ -117,7 +117,7 @@ vim.opt.textwidth = 500
 
 vim.opt.autoindent = true
 vim.opt.smartindent = true
-vim.opt.wrap = true
+vim.opt.wrap = false  -- Disable line wrap by default
 
 -- Visual mode pressing * or # searches for the current selection
 vim.keymap.set('v', '*', ':<C-u>lua require("utils.helpers").visual_selection("f", "")<CR>/<C-R>=@/<CR><CR>', { silent = true })

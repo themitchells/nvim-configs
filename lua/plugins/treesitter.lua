@@ -20,6 +20,7 @@ return {
         },
         highlight = {
             enable = true,
+            disable = { "verilog" },  -- Use verilog_systemverilog.vim syntax instead
             additional_vim_regex_highlighting = false,
         },
         indent = {

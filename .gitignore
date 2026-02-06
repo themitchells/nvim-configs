@@ -1,0 +1,38 @@
+# Neovim Configuration .gitignore
+
+# Temporary directories (swap, backup, undo, sessions)
+temp_dirs/
+
+# Plugin version lock (optional - uncomment to track plugin versions)
+# lazy-lock.json
+
+# Log files
+*.log
+
+# Backup files created during editing
+*.backup
+*.bak
+*~
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor-specific files
+.vscode/
+.idea/
+
+# Compiled Lua bytecode
+*.luac
+
+# Testing and temporary files
+test_*.lua
+test_*.v
+test_*.sv
+*_test.lua
+*_test.v
+*_test.sv
+
+# Local development files
+.local/
+.scratch/

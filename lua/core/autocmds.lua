@@ -1,0 +1,154 @@
+-- Autocommands
+-- Migrated from ~/.vim/vimrcs/extended.vim
+
+-- File cleanup on save
+local cleanup_group = vim.api.nvim_create_augroup('FileCleanup', { clear = true })
+vim.api.nvim_create_autocmd('BufWrite', {
+    group = cleanup_group,
+    pattern = '*',
+    callback = function()
+        require('utils.helpers').cleanup_file()
+    end,
+})
+
+-- Filetype-specific settings
+local filetype_group = vim.api.nvim_create_augroup('FiletypeSettings', { clear = true })
+
+-- Make files should use real tabs
+vim.api.nvim_create_autocmd('FileType', {
+    group = filetype_group,
+    pattern = 'make',
+    callback = function()
+        vim.opt_local.expandtab = false
+    end,
+})
+
+-- YAML files use 2-space indentation
+vim.api.nvim_create_autocmd('FileType', {
+    group = filetype_group,
+    pattern = 'yaml',
+    callback = function()
+        vim.opt_local.tabstop = 2
+        vim.opt_local.shiftwidth = 2
+        vim.opt_local.softtabstop = 2
+        vim.opt_local.expandtab = true
+    end,
+})
+
+-- Python files
+vim.api.nvim_create_autocmd('FileType', {
+    group = filetype_group,
+    pattern = 'python',
+    callback = function()
+        vim.opt_local.tabstop = 4
+        vim.opt_local.shiftwidth = 4
+        vim.opt_local.softtabstop = 4
+        vim.opt_local.expandtab = true
+    end,
+})
+
+-- Verilog/SystemVerilog filetype detection
+local verilog_group = vim.api.nvim_create_augroup('VerilogFiletype', { clear = true })
+vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, {
+    group = verilog_group,
+    pattern = {'*.v', '*.vh', '*.vp', '*.sv', '*.svi', '*.svh', '*.svp', '*.sva'},
+    callback = function()
+        vim.bo.filetype = 'verilog_systemverilog'
+    end,
+})
+
+-- Window title updates
+local title_group = vim.api.nvim_create_augroup('WindowTitle', { clear = true })
+vim.api.nvim_create_autocmd('BufEnter', {
+    group = title_group,
+    callback = function()
+        require('utils.helpers').set_window_name()
+    end,
+})
+
+-- Window view preservation
+local view_group = vim.api.nvim_create_augroup('PreserveView', { clear = true })
+vim.api.nvim_create_autocmd('BufLeave', {
+    group = view_group,
+    pattern = '*',
+    callback = function()
+        require('utils.helpers').auto_save_win_view()
+    end,
+})
+
+vim.api.nvim_create_autocmd('BufEnter', {
+    group = view_group,
+    pattern = '*',
+    callback = function()
+        require('utils.helpers').auto_restore_win_view()
+    end,
+})
+
+-- Return to last edit position when opening files
+vim.api.nvim_create_autocmd('BufReadPost', {
+    callback = function()
+        local mark = vim.api.nvim_buf_get_mark(0, '"')
+        local lcount = vim.api.nvim_buf_line_count(0)
+        if mark[1] > 0 and mark[1] <= lcount then
+            pcall(vim.api.nvim_win_set_cursor, 0, mark)
+        end
+    end,
+})
+
+-- Config reload on save
+local vimrc_group = vim.api.nvim_create_augroup('VimrcReload', { clear = true })
+vim.api.nvim_create_autocmd('BufWritePost', {
+    group = vimrc_group,
+    pattern = vim.fn.expand('~/.config/nvim/init.lua'),
+    callback = function()
+        vim.cmd('source ' .. vim.fn.expand('~/.config/nvim/init.lua'))
+    end,
+})
+
+-- Colorscheme customization
+local colorscheme_group = vim.api.nvim_create_augroup('ColorschemeCustomization', { clear = true })
+
+vim.api.nvim_create_autocmd('ColorScheme', {
+    group = colorscheme_group,
+    callback = function()
+        -- Will be implemented when colorscheme module exists
+        local ok, tinted = pcall(require, 'colorscheme.tinted')
+        if ok then
+            tinted.customize_highlights()
+        end
+    end,
+})
+
+vim.api.nvim_create_autocmd('FocusGained', {
+    group = colorscheme_group,
+    callback = function()
+        local ok, tinted = pcall(require, 'colorscheme.tinted')
+        if ok then
+            tinted.setup()
+        end
+    end,
+})
+
+-- Session management
+local session_group = vim.api.nvim_create_augroup('SessionManagement', { clear = true })
+
+vim.api.nvim_create_autocmd('VimLeave', {
+    group = session_group,
+    callback = function()
+        local ok, session = pcall(require, 'sessions.manager')
+        if ok then
+            session.save_session_on_close()
+        end
+    end,
+})
+
+vim.api.nvim_create_autocmd('VimEnter', {
+    group = session_group,
+    nested = true,
+    callback = function()
+        local ok, session = pcall(require, 'sessions.manager')
+        if ok then
+            session.load_session_servername()
+        end
+    end,
+})

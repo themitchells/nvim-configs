@@ -106,20 +106,13 @@ return {
             end,
         })
 
-        -- Lua LSP
+        -- Lua LSP (.luarc.json in workspace root defines vim global)
         lspconfig.lua_ls.setup({
             capabilities = capabilities,
             settings = {
                 Lua = {
-                    runtime = {
-                        version = 'LuaJIT',
-                    },
-                    diagnostics = {
-                        globals = { 'vim' },
-                    },
-                    workspace = {
-                        library = vim.api.nvim_get_runtime_file("", true),
-                        checkThirdParty = false,
+                    completion = {
+                        callSnippet = "Replace",
                     },
                     telemetry = {
                         enable = false,
@@ -144,7 +137,7 @@ return {
                 vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, vim.tbl_extend('force', opts, { desc = "Go to implementation" }))
                 vim.keymap.set('n', 'gr', vim.lsp.buf.references, vim.tbl_extend('force', opts, { desc = "Show references" }))
                 vim.keymap.set('n', 'K', vim.lsp.buf.hover, vim.tbl_extend('force', opts, { desc = "Hover documentation" }))
-                vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, vim.tbl_extend('force', opts, { desc = "Signature help" }))
+                vim.keymap.set('n', '<leader>k', vim.lsp.buf.signature_help, vim.tbl_extend('force', opts, { desc = "Signature help" }))
 
                 -- Refactoring
                 vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, vim.tbl_extend('force', opts, { desc = "Rename symbol" }))

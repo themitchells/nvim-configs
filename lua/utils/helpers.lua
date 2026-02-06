@@ -113,6 +113,7 @@ end
 
 -- Git diff current file
 function M.git_diff()
+    vim.fn.mkdir(vim.fn.expand("~/.tmp"), "p")
     vim.cmd('!git diff --no-ext-diff % 2>&1 | tee ~/.tmp/git_diff_output.log')
 end
 
@@ -126,8 +127,17 @@ function M.cleanup_file()
     -- Remove Windows carriage returns
     vim.cmd([[silent! %s/\r//g]])
 
-    -- Convert tabs to spaces (except in Makefiles)
-    if vim.bo.filetype ~= 'make' then
+    -- Convert tabs to spaces (except in filetypes that use tabs by convention)
+    local tab_filetypes = {
+        'make',      -- Makefiles require tabs
+        'go',        -- Go uses tabs by convention
+        'tsv',       -- Tab-separated values
+        'gitconfig', -- Git config uses tabs
+        'diff',      -- Diff/patch files
+        'snippets',  -- Snippet files may use tabs for indentation markers
+    }
+
+    if not vim.tbl_contains(tab_filetypes, vim.bo.filetype) then
         vim.cmd([[silent! %s/\t/    /g]])
     end
 

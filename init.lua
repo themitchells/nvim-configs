@@ -15,7 +15,7 @@ require("plugins")
 -- Load colorscheme
 local ok, tinted = pcall(require, 'colorscheme.tinted')
 if ok then
-    tinted.setup()
+    pcall(tinted.setup)
 end
 
 -- Load Verilog-specific keymaps

@@ -220,6 +220,33 @@ This causes conflicting diagnostics. The exclusion ensures only your custom conf
    ```
 3. Restart Neovim - mason will auto-install the server
 
+### Lua Language Server Configuration
+
+**File:** `.luarc.json` (workspace root)
+
+This configuration file tells `lua_ls` (Lua Language Server) about Neovim-specific globals and settings. It eliminates "Undefined global 'vim'" warnings when editing Neovim Lua configuration files.
+
+**Contents:**
+```json
+{
+  "runtime.version": "LuaJIT",
+  "diagnostics.globals": ["vim"]
+}
+```
+
+**Purpose:**
+- `runtime.version`: Specifies LuaJIT (Neovim's Lua runtime)
+- `diagnostics.globals`: Tells LSP that `vim` is a valid global variable
+
+**Why it's needed:**
+- Lua LSP doesn't know about Neovim's `vim` global by default
+- Without this file, you'll see orange warning dots on every `vim.*` line
+- This is a workspace-level configuration that takes precedence over LSP settings
+
+**Location:** `~/.config/nvim/.luarc.json`
+
+This file should be committed to version control so all users of your config get proper LSP support.
+
 ---
 
 ## Verilog/SystemVerilog Support

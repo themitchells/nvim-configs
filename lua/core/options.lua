@@ -1,9 +1,6 @@
 -- Core Neovim Options
 -- Migrated from ~/.vim/vimrcs/basic.vim
-
--- Leader keys (must be set before other mappings)
-vim.g.mapleader = ","
-vim.g.maplocalleader = ","
+-- Note: Leader keys are set in init.lua before this file loads
 
 -- Sets how many lines of history VIM has to remember
 vim.opt.history = 500
@@ -138,22 +135,12 @@ vim.keymap.set('n', '<C-k>', '<C-W>k', { desc = "Move to window above" })
 vim.keymap.set('n', '<C-h>', '<C-W>h', { desc = "Move to window left" })
 vim.keymap.set('n', '<C-l>', '<C-W>l', { desc = "Move to window right" })
 
--- Close the current buffer
-vim.keymap.set('n', '<leader>bd', ':Bclose<cr>:tabclose<cr>gT', { desc = "Close buffer" })
-
 -- Close all the buffers
 vim.keymap.set('n', '<leader>ba', ':bufdo bd<cr>', { desc = "Close all buffers" })
 
 -- Navigate buffers
 vim.keymap.set('n', '<leader>l', ':bnext<cr>', { desc = "Next buffer" })
 vim.keymap.set('n', '<leader>h', ':bprevious<cr>', { desc = "Previous buffer" })
-
--- Useful mappings for managing tabs
-vim.keymap.set('n', '<leader>tn', ':tabnew<cr>', { desc = "New tab" })
-vim.keymap.set('n', '<leader>to', ':tabonly<cr>', { desc = "Close other tabs" })
-vim.keymap.set('n', '<leader>tc', ':tabclose<cr>', { desc = "Close tab" })
-vim.keymap.set('n', '<leader>tm', ':tabmove ', { desc = "Move tab" })
-vim.keymap.set('n', '<leader>t<leader>', ':tabnext<cr>', { desc = "Next tab" })
 
 -- Let 'tl' toggle between this and the last accessed tab
 vim.g.lasttab = 1
@@ -174,17 +161,6 @@ vim.keymap.set('n', '<leader>cd', ':cd %:p:h<cr>:pwd<cr>', { desc = "CD to curre
 vim.opt.switchbuf = 'useopen,usetab,newtab'
 vim.opt.showtabline = 0  -- Never show tabline (use buffergator instead)
 
--- Return to last edit position when opening files
-vim.api.nvim_create_autocmd('BufReadPost', {
-    callback = function()
-        local mark = vim.api.nvim_buf_get_mark(0, '"')
-        local lcount = vim.api.nvim_buf_line_count(0)
-        if mark[1] > 0 and mark[1] <= lcount then
-            pcall(vim.api.nvim_win_set_cursor, 0, mark)
-        end
-    end,
-})
-
 -- Always show the status line
 vim.opt.laststatus = 2
 
@@ -200,19 +176,11 @@ vim.keymap.set('n', '<M-k>', 'mz:m-2<cr>`z', { desc = "Move line up" })
 vim.keymap.set('v', '<M-j>', ":m'>+<cr>`<my`>mzgv`yo`z", { desc = "Move selection down" })
 vim.keymap.set('v', '<M-k>', ":m'<-2<cr>`>my`<mzgv`yo`z", { desc = "Move selection up" })
 
--- Delete trailing white space on save
-vim.api.nvim_create_autocmd('BufWrite', {
-    pattern = '*',
-    callback = function()
-        require('utils.helpers').cleanup_file()
-    end,
-})
-
 -- When you press gv you Grep after the selected text
-vim.keymap.set('v', '<silent> gv', ':<C-u>lua require("utils.helpers").visual_selection("gv", "")<CR>', { silent = true })
+vim.keymap.set('v', 'gv', ':<C-u>lua require("utils.helpers").visual_selection("gv", "")<CR>', { silent = true })
 
 -- When you press <leader>r you can search and replace the selected text
-vim.keymap.set('v', '<silent> <leader>r', ':<C-u>lua require("utils.helpers").visual_selection("replace", "")<CR>', { silent = true })
+vim.keymap.set('v', '<leader>r', ':<C-u>lua require("utils.helpers").visual_selection("replace", "")<CR>', { silent = true })
 
 -- Pressing ,ss will toggle and untoggle spell checking
 vim.keymap.set('n', '<leader>ss', ':setlocal spell!<cr>', { desc = "Toggle spell check" })

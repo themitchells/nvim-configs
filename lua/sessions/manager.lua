@@ -13,20 +13,21 @@ local function get_session_dir()
     return session_dir
 end
 
--- Get session name from servername
+-- Get session name from servername (matches original Vim behavior)
 local function get_server_session_name()
     local servername = vim.v.servername
     if servername ~= "" and servername ~= "GVIM" then
-        -- Extract name from socket path
-        -- Neovim uses socket paths like /tmp/nvim.user/ABC123/0
-        if servername:match("nvim") then
-            -- Extract the session ID from the socket path
-            local session_id = servername:match("/([^/]+)/[^/]+$") or servername:match("([^/]+)$")
-            if session_id then
-                servername = session_id
-            end
+        local session_name
+        -- If servername is a full path (starts with /), extract just the filename without extension
+        -- This handles socket paths like /run/user/5556/nvim.12345.0 → nvim.12345
+        if servername:match("^/") then
+            -- Use fnamemodify equivalent: get tail (:t) and remove extension (:r)
+            session_name = vim.fn.fnamemodify(servername, ":t:r")
+        else
+            -- Use servername as-is (for named servers like --listen ./mysession)
+            session_name = servername
         end
-        return vim.fn.tolower(get_session_dir() .. "/" .. servername)
+        return vim.fn.tolower(get_session_dir() .. "/" .. session_name)
     end
     return nil
 end
@@ -66,6 +67,10 @@ function M.save_session()
         return
     end
 
+    -- Ensure session directory exists before saving
+    local session_dir = vim.fn.fnamemodify(M.session_name, ":h")
+    vim.fn.mkdir(session_dir, "p")
+
     vim.cmd("mksession! " .. M.session_name)
     print("Saved session: " .. M.session_name)
 end
@@ -87,12 +92,16 @@ function M.save_session_on_close()
     M.save_session()
 end
 
--- Auto-load based on servername
+-- Auto-load based on servername (matches original Vim behavior)
 function M.load_session_servername()
     local session = get_server_session_name()
-    if session and vim.fn.filereadable(session) == 1 then
+    if session then
+        -- ALWAYS set session name (even if file doesn't exist yet)
         M.session_name = session
-        M.load_session()
+        -- Only load if session file exists
+        if vim.fn.filereadable(session) == 1 then
+            M.load_session()
+        end
     end
 end
 

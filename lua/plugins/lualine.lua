@@ -16,7 +16,20 @@ return {
             lualine_a = {'mode'},
             lualine_b = {
                 'branch',
-                'diff',
+                {
+                    'diff',
+                    symbols = {
+                        added = '+',
+                        modified = '~',
+                        removed = '-'
+                    },
+                    colored = true,  -- Use colors for diff
+                    diff_color = {
+                        added    = { fg = '#5faf5f' },  -- Green
+                        modified = { fg = '#d7af5f' },  -- Yellow
+                        removed  = { fg = '#df5f5f' },  -- Red
+                    },
+                },
                 {
                     'diagnostics',
                     sources = { 'nvim_lsp' },
@@ -39,12 +52,12 @@ return {
                         unnamed = '[No Name]',
                     },
                     color = function()
-                        -- Colored background section (like airline)
+                        -- Colored background section (like airline) - hardcoded for reliability
                         if vim.bo.modified then
-                            -- Red background when modified
+                            -- Orange background when modified (readable)
                             return {
                                 fg = '#ffffff',  -- White text
-                                bg = '#cc6666',  -- Red background
+                                bg = '#d7875f',  -- Orange background
                                 gui = 'bold'
                             }
                         else

@@ -64,11 +64,12 @@ return {
         pickers = {
             find_files = {
                 hidden = false,
-                find_command = {
+                -- Auto-detect fd or use telescope defaults
+                find_command = vim.fn.executable("fd") == 1 and {
                     "fd",
                     "--type", "f",
                     "--strip-cwd-prefix",
-                },
+                } or nil,
             },
         },
         extensions = {

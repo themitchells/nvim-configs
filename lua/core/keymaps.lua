@@ -6,7 +6,7 @@ vim.keymap.set('n', '<space>', '/', { desc = "Search forward" })
 vim.keymap.set('n', '<C-space>', '?', { desc = "Search backward" })
 
 -- Disable search highlighting with <leader><cr>
-vim.keymap.set('n', '<silent> <leader><cr>', ':noh<cr>', { silent = true, desc = "Clear search highlight" })
+vim.keymap.set('n', '<leader><cr>', ':noh<cr>', { silent = true, desc = "Clear search highlight" })
 
 -- Window cycling with Shift-Tab
 vim.keymap.set('n', '<S-Tab>', '<C-W>w', { desc = "Cycle windows" })

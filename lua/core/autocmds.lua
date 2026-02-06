@@ -23,6 +23,16 @@ vim.api.nvim_create_autocmd('FileType', {
     end,
 })
 
+-- Verilog files should not use smartindent (conflicts with syntax)
+vim.api.nvim_create_autocmd('FileType', {
+    group = filetype_group,
+    pattern = { 'verilog', 'systemverilog', 'verilog_systemverilog' },
+    callback = function()
+        vim.opt_local.smartindent = false
+        vim.opt_local.autoindent = true
+    end,
+})
+
 -- YAML files use 2-space indentation
 vim.api.nvim_create_autocmd('FileType', {
     group = filetype_group,

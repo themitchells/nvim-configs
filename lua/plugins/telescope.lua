@@ -42,7 +42,7 @@ return {
             },
             sorting_strategy = "ascending",
             -- Disable treesitter highlighting in previewer to avoid errors
-            buffer_previewer_maker = require("telescope.previewers").buffer_previewer_maker,
+            -- buffer_previewer_maker = require("telescope.previewers").buffer_previewer_maker,
             vimgrep_arguments = {
                 "rg",
                 "--color=never",

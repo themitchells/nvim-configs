@@ -36,7 +36,7 @@ require("lazy").setup({
     { import = "plugins.treesitter" },
 
     -- LSP support (NEW)
-    { import = "plugins.lsp" },
+    --{ import = "plugins.lsp" },
 
     -- Keep tabular plugin
     {

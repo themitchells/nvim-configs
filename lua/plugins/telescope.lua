@@ -41,7 +41,8 @@ return {
                 },
             },
             sorting_strategy = "ascending",
-            -- Disable treesitter highlighting in previewer to avoid errors
+            -- Note: buffer_previewer_maker commented out - causes errors on fresh install
+            -- and is redundant (telescope uses this as default anyway)
             -- buffer_previewer_maker = require("telescope.previewers").buffer_previewer_maker,
             vimgrep_arguments = {
                 "rg",

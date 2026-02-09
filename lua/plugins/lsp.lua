@@ -4,8 +4,14 @@
 return {
     "neovim/nvim-lspconfig",
     dependencies = {
-        "williamboman/mason.nvim",
-        "williamboman/mason-lspconfig.nvim",
+        {
+            "williamboman/mason.nvim",
+            lazy = false,  -- Must load immediately for fresh installs
+        },
+        {
+            "williamboman/mason-lspconfig.nvim",
+            lazy = false,  -- Must load immediately to install servers before LSP attaches
+        },
         "hrsh7th/nvim-cmp",
         "hrsh7th/cmp-nvim-lsp",
         "hrsh7th/cmp-buffer",
@@ -107,24 +113,30 @@ return {
         })
 
         -- Lua LSP (.luarc.json in workspace root defines vim global)
-        lspconfig.lua_ls.setup({
-            capabilities = capabilities,
-            settings = {
-                Lua = {
-                    completion = {
-                        callSnippet = "Replace",
-                    },
-                    telemetry = {
-                        enable = false,
+        -- Only setup if lua-language-server is installed
+        if vim.fn.executable("lua-language-server") == 1 then
+            lspconfig.lua_ls.setup({
+                capabilities = capabilities,
+                settings = {
+                    Lua = {
+                        completion = {
+                            callSnippet = "Replace",
+                        },
+                        telemetry = {
+                            enable = false,
+                        },
                     },
                 },
-            },
-        })
+            })
+        end
 
         -- Bash LSP
-        lspconfig.bashls.setup({
-            capabilities = capabilities,
-        })
+        -- Only setup if bash-language-server is installed
+        if vim.fn.executable("bash-language-server") == 1 then
+            lspconfig.bashls.setup({
+                capabilities = capabilities,
+            })
+        end
 
         -- LSP keymaps (attached when LSP attaches to buffer)
         vim.api.nvim_create_autocmd("LspAttach", {

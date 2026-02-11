@@ -55,7 +55,7 @@ require("lazy").setup({
         rtp = {
             disabled_plugins = {
                 "gzip",
-                "matchit",
+                -- "matchit",  -- Re-enabled for Verilog begin-end matching
                 -- "matchparen",  -- Re-enabled for bracket highlighting
                 "netrwPlugin",
                 "tarPlugin",

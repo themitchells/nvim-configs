@@ -9,6 +9,9 @@ vim.opt.history = 500
 vim.cmd('filetype plugin on')
 vim.cmd('filetype indent on')
 
+-- Load matchit plugin for % matching (begin-end, etc.)
+vim.cmd('runtime! macros/matchit.vim')
+
 -- Set to auto read when a file is changed from the outside
 vim.opt.autoread = false  -- Ask before reloading modified files
 

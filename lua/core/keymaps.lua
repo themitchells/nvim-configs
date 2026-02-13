@@ -90,3 +90,8 @@ vim.keymap.set('n', '<C-w>+', ':resize +5<cr>', { desc = "Increase window height
 vim.keymap.set('n', '<C-w>-', ':resize -5<cr>', { desc = "Decrease window height" })
 vim.keymap.set('n', '<C-w>>', ':vertical resize +5<cr>', { desc = "Increase window width" })
 vim.keymap.set('n', '<C-w><', ':vertical resize -5<cr>', { desc = "Decrease window width" })
+
+-- Show custom keybindings help
+vim.keymap.set('n', '<leader>help', function()
+    require('utils.help').show_help()
+end, { desc = "Show keybindings help" })

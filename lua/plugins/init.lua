@@ -38,6 +38,15 @@ require("lazy").setup({
     -- LSP support (NEW)
     { import = "plugins.lsp" },
 
+    -- Keybinding discovery (NEW)
+    { import = "plugins.which-key" },
+
+    -- Sticky scope headers (NEW)
+    { import = "plugins.treesitter-context" },
+
+    -- Indent guide lines (NEW)
+    { import = "plugins.indent-blankline" },
+
     -- Keep tabular plugin
     {
         "godlygeek/tabular",

@@ -12,7 +12,8 @@ return {
         { "<leader>hu", function() require('gitsigns').undo_stage_hunk() end, desc = "Undo stage hunk" },
         { "<leader>hr", function() require('gitsigns').reset_hunk() end, desc = "Reset hunk" },
         { "<leader>hp", function() require('gitsigns').preview_hunk() end, desc = "Preview hunk" },
-        { "<leader>hb", function() require('gitsigns').blame_line({full=true}) end, desc = "Blame line" },
+        { "<leader>hb", function() require('gitsigns').blame_line({full=true}) end, desc = "Blame line (popup)" },
+        { "<leader>tb", function() require('gitsigns').toggle_current_line_blame() end, desc = "Toggle inline blame" },
     },
     opts = {
         signs = {
@@ -32,13 +33,14 @@ return {
             follow_files = true
         },
         attach_to_untracked = true,
-        current_line_blame = false,
+        current_line_blame = true,  -- Show git blame inline (enabled)
         current_line_blame_opts = {
             virt_text = true,
-            virt_text_pos = 'eol',
-            delay = 1000,
+            virt_text_pos = 'eol',  -- End of line
+            delay = 500,  -- Delay before showing (ms)
             ignore_whitespace = false,
         },
+        current_line_blame_formatter = '<author>, <author_time:%Y-%m-%d> - <summary>',
         sign_priority = 6,
         update_debounce = 100,
         status_formatter = nil,

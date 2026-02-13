@@ -86,10 +86,11 @@ vim.opt.encoding = 'utf8'
 -- Use Unix as the standard file type
 vim.opt.fileformats = 'unix,dos,mac'
 
--- Turn backup off, since most stuff is in SVN, git etc anyway
-vim.opt.backup = false
-vim.opt.writebackup = false
-vim.opt.swapfile = false
+-- Enable backup and swap files for crash recovery
+-- Files stored in XDG-compliant directories below
+vim.opt.backup = true
+vim.opt.writebackup = true
+vim.opt.swapfile = true
 
 -- Use XDG-compliant state directory for temporary files
 -- The // suffix preserves full file paths in the filename to avoid collisions
@@ -198,7 +199,7 @@ vim.keymap.set('n', '<leader>s?', 'z=', { desc = "Spelling suggestions" })
 vim.keymap.set('n', '<leader>pp', ':setlocal paste!<cr>', { desc = "Toggle paste mode" })
 
 -- Quickly open a buffer for scribble
-vim.keymap.set('n', '<leader>q', ':e ~/buffer<cr>', { desc = "Open scratch buffer" })
+vim.keymap.set('n', '<leader>sb', ':e ~/buffer<cr>', { desc = "Open scratch buffer" })
 
 -- Quickly open a markdown buffer for scribble
 vim.keymap.set('n', '<leader>x', ':e ~/buffer.md<cr>', { desc = "Open markdown scratch buffer" })

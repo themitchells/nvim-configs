@@ -51,13 +51,14 @@ function M.customize_highlights()
         })
     end
 
-    if colors.gui0B and colors.gui01 then
+    if colors.gui0A and colors.gui01 then
         vim.api.nvim_set_hl(0, 'MatchParen', {
-            fg = ensure_hash(colors.gui0B),
-            bg = ensure_hash(colors.gui01),
-            ctermfg = tonumber(colors.cterm0B),
+            fg = ensure_hash(colors.gui0A),  -- Yellow/orange text
+            bg = ensure_hash(colors.gui01),  -- Subtle background
+            ctermfg = tonumber(colors.cterm0A),
             ctermbg = tonumber(colors.cterm01),
             bold = true,
+            underline = true,  -- Added for better visibility
         })
     end
 

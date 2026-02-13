@@ -37,7 +37,7 @@ return {
         current_line_blame_opts = {
             virt_text = true,
             virt_text_pos = 'eol',  -- End of line
-            delay = 500,  -- Delay before showing (ms)
+            delay = 1000,  -- Delay before showing (ms)
             ignore_whitespace = false,
         },
         current_line_blame_formatter = '<author>, <author_time:%Y-%m-%d> - <summary>',

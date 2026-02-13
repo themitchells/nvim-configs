@@ -9,7 +9,7 @@ return {
 
         wk.setup({
             preset = "modern",
-            delay = 500,  -- Delay before showing popup (ms)
+            delay = 750,  -- Delay before showing popup (ms)
             icons = {
                 breadcrumb = "»",
                 separator = "➜",

@@ -1,97 +1,162 @@
--- Additional Keymaps
--- Migrated from ~/.vim/vimrcs/extended.vim
+-- Keymaps
+-- Single source of truth for all keybindings.
+-- Returns sections table used by lua/utils/help.lua to generate the help window.
+--
+-- EXCEPTIONS (defined elsewhere for technical reasons):
+--   LSP keymaps     → lua/plugins/lsp.lua     (buffer-local, must be set on LspAttach)
+--   Session keymaps → lua/sessions/manager.lua (F10/F11/F12, set by session plugin)
+--
+-- Entry format: { mode, lhs, rhs, desc }
+--           or: { mode, lhs, rhs, desc, { extra_opts } }
 
--- Map <Space> to / (search) and Ctrl-<Space> to ? (backwards search)
-vim.keymap.set('n', '<space>', '/', { desc = "Search forward" })
-vim.keymap.set('n', '<C-space>', '?', { desc = "Search backward" })
+local sections = {
 
--- Disable search highlighting with <leader><cr>
-vim.keymap.set('n', '<leader><cr>', ':noh<cr>', { silent = true, desc = "Clear search highlight" })
+    { name = "Search", maps = {
+        { "n", "<Space>",       "/",           "Search forward" },
+        { "n", "<C-Space>",     "?",           "Search backward" },
+        { "n", "<leader><CR>",  ":noh<CR>",    "Clear search highlight",   { silent = true } },
+    }},
 
--- Window cycling with Shift-Tab
-vim.keymap.set('n', '<S-Tab>', '<C-W>w', { desc = "Cycle windows" })
+    { name = "File Navigation", maps = {
+        { "n", "<F4>",         "<cmd>NvimTreeToggle<CR>",   "Toggle file explorer" },
+        { "n", "<leader>nn",   "<cmd>NvimTreeToggle<CR>",   "Toggle file explorer" },
+        { "n", "<leader>nf",   "<cmd>NvimTreeFindFile<CR>", "Find current file in tree" },
+        { "n", "<leader>nc",   "<cmd>NvimTreeCollapse<CR>", "Collapse tree" },
+        { "n", "<F3>",         "<cmd>BuffergatorToggle<CR>","Toggle buffer sidebar" },
+        { "n", "<leader>bb",   "<cmd>BuffergatorToggle<CR>","Toggle buffer sidebar" },
+        { "n", "<S-Tab>",      "<C-W>w",                    "Cycle windows" },
+        { "n", "<C-w>+",       ":resize +5<CR>",            "Increase window height" },
+        { "n", "<C-w>-",       ":resize -5<CR>",            "Decrease window height" },
+        { "n", "<C-w>>",       ":vertical resize +5<CR>",   "Increase window width" },
+        { "n", "<C-w><",       ":vertical resize -5<CR>",   "Decrease window width" },
+    }},
 
--- Close current buffer intelligently
-vim.keymap.set('n', '<leader>bd', ':lua require("utils.buffer").buf_close()<cr>', { desc = "Close buffer intelligently" })
+    { name = "Telescope", maps = {
+        { "n", "<leader>ff",   "<cmd>Telescope find_files<CR>",  "Find files" },
+        { "n", "<leader>fg",   "<cmd>Telescope live_grep<CR>",   "Live grep" },
+        { "n", "<leader>fs",   "<cmd>Telescope grep_string<CR>", "Grep word under cursor" },
+        { "n", "<leader>fb",   "<cmd>Telescope buffers<CR>",     "Find buffers" },
+        { "n", "<leader>fo",   "<cmd>Telescope oldfiles<CR>",    "Recent files" },
+        { "n", "<leader>fh",   "<cmd>Telescope help_tags<CR>",   "Help tags" },
+        { "n", "<leader>fc",   "<cmd>Telescope commands<CR>",    "Commands" },
+        { "n", "<leader>fk",   "<cmd>Telescope keymaps<CR>",     "Keymaps" },
+        { "n", "<leader>fr",   "<cmd>Telescope resume<CR>",      "Resume last search" },
+    }},
 
--- Function key mappings
-vim.keymap.set('n', '<F2>', ':set wrap!<cr>', { desc = "Toggle line wrap" })
-vim.keymap.set('n', '<F5>', ':lua require("utils.helpers").git_diff()<cr>', { desc = "Git diff current file" })
-vim.keymap.set('n', '<F7>', ':!chmod a+x %<cr>', { desc = "Make file executable" })
+    { name = "Buffer Management", maps = {
+        { "n", "<leader>bd",   ':lua require("utils.buffer").buf_close()<CR>', "Close buffer" },
+        { "n", "<leader>bn",   ":bnext<CR>",     "Next buffer" },
+        { "n", "<leader>bp",   ":bprevious<CR>", "Previous buffer" },
+        { "n", "<leader>bf",   ":bfirst<CR>",    "First buffer" },
+        { "n", "<leader>bl",   ":blast<CR>",     "Last buffer" },
+    }},
 
--- Paste over word without yanking it (Ctrl-p)
--- This was to fix issue when pasting to a word at the end of a line
-vim.keymap.set('n', '<C-p>', '"_cw<C-r>0<Esc>', { silent = true, desc = "Paste over word" })
-vim.keymap.set('v', '<C-p>', '"_c<C-r>0<Esc>', { silent = true, desc = "Paste over selection" })
+    { name = "Tabs", maps = {
+        { "n", "<leader>tn",   ":tabnew<CR>",   "New tab" },
+        { "n", "<leader>to",   ":tabonly<CR>",  "Close other tabs" },
+        { "n", "<leader>tc",   ":tabclose<CR>", "Close tab" },
+        { "n", "<leader>tm",   ":tabmove ",     "Move tab" },
+    }},
 
--- Macro replay with Ctrl-q (alternative to q)
-vim.keymap.set('n', '<C-q>', 'q', { desc = "Start/stop macro recording" })
+    { name = "Quickfix", maps = {
+        { "n", "<leader>cn",   ":cnext<CR>",     "Next quickfix" },
+        { "n", "<leader>cp",   ":cprevious<CR>", "Previous quickfix" },
+        { "n", "<leader>co",   ":copen<CR>",     "Open quickfix" },
+        { "n", "<leader>cc",   ":cclose<CR>",    "Close quickfix" },
+    }},
 
--- Command-line mode helpers
-vim.keymap.set('c', '$h', 'e ~/')
-vim.keymap.set('c', '$d', 'e ~/Desktop/')
-vim.keymap.set('c', '$j', 'e ./')
-vim.keymap.set('c', '$c', 'e <C-\\>eCurrentFileDir("e")<cr>')
+    { name = "Git", maps = {
+        { "n", "<F5>",         ':lua require("utils.helpers").git_diff()<CR>',               "Git diff current file" },
+        { "n", "<F6>",         function() require('gitsigns').toggle_word_diff() end,        "Toggle word diff" },
+        { "n", "]c",           function() require('gitsigns').next_hunk() end,               "Next git hunk" },
+        { "n", "[c",           function() require('gitsigns').prev_hunk() end,               "Previous git hunk" },
+        { "n", "<leader>hs",   function() require('gitsigns').stage_hunk() end,              "Stage hunk" },
+        { "n", "<leader>hu",   function() require('gitsigns').undo_stage_hunk() end,         "Undo stage hunk" },
+        { "n", "<leader>hr",   function() require('gitsigns').reset_hunk() end,              "Reset hunk" },
+        { "n", "<leader>hp",   function() require('gitsigns').preview_hunk() end,            "Preview hunk" },
+        { "n", "<leader>hb",   function() require('gitsigns').blame_line({ full = true }) end, "Blame line (popup)" },
+    }},
 
--- $q is super useful when browsing on the command line
--- it deletes everything until the last slash
-vim.keymap.set('c', '$q', '<C-\\>eDeleteTillSlash()<cr>')
+    { name = "UI Toggles", maps = {
+        { "n", "<F2>",         ":set wrap!<CR>",                                                     "Toggle line wrap" },
+        { "n", "<leader>ui",   "<cmd>IBLToggle<CR>",                                                 "Toggle indent lines" },
+        { "n", "<leader>ub",   function() require('gitsigns').toggle_current_line_blame() end,       "Toggle git blame" },
+        { "n", "<leader>uc",   function() require('treesitter-context').toggle() end,                "Toggle context header" },
+        { "n", "<leader>ud",   function() vim.diagnostic.enable(not vim.diagnostic.is_enabled()) end,"Toggle diagnostics" },
+        { "n", "<leader>un",   function() vim.wo.relativenumber = not vim.wo.relativenumber end,     "Toggle relative numbers" },
+        { "n", "<leader>us",   function() vim.wo.spell = not vim.wo.spell end,                       "Toggle spell check" },
+    }},
 
--- Bash-like keys for the command line
-vim.keymap.set('c', '<C-A>', '<Home>')
-vim.keymap.set('c', '<C-E>', '<End>')
-vim.keymap.set('c', '<C-K>', '<C-U>')
-vim.keymap.set('c', '<C-P>', '<Up>')
-vim.keymap.set('c', '<C-N>', '<Down>')
+    { name = "Verilog", maps = {
+        { "n", "<F8>", function()
+            local ok, fmt = pcall(require, 'verilog.format')
+            if ok then fmt.format_to_instance()
+            else vim.notify("Failed to load verilog.format", vim.log.levels.ERROR) end
+        end, "Format Verilog instance" },
+        { "n", "<F9>", function()
+            local ok, fmt = pcall(require, 'verilog.format')
+            if ok then fmt.format_to_instance_line()
+            else vim.notify("Failed to load verilog.format", vim.log.levels.ERROR) end
+        end, "Format Verilog line" },
+        { "n", "<leader>vg", function()
+            if vim.fn.exists(':VerilogGotoInstanceStart') == 2 then
+                vim.cmd('VerilogGotoInstanceStart')
+            else
+                vim.notify("Verilog plugin not loaded", vim.log.levels.WARN)
+            end
+        end, "Goto Verilog instance start", { silent = true } },
+    }},
 
--- Useful mappings for managing tabs
-vim.keymap.set('n', '<leader>tn', ':tabnew<cr>', { desc = "New tab" })
-vim.keymap.set('n', '<leader>to', ':tabonly<cr>', { desc = "Close other tabs" })
-vim.keymap.set('n', '<leader>tc', ':tabclose<cr>', { desc = "Close tab" })
-vim.keymap.set('n', '<leader>tm', ':tabmove ', { desc = "Move tab" })
+    { name = "Navigation", maps = {
+        -- [C uppercase avoids conflict with [c (git prev hunk)
+        { "n", "[C",   function() require('treesitter-context').go_to_context() end, "Jump to scope start", { silent = true } },
+    }},
 
--- Remove the Windows ^M - when encodings get messed up
-vim.keymap.set('n', '<Leader>m', 'mmHmt:%s/<C-V><cr>//ge<cr>\'tzt\'m', { desc = "Remove Windows ^M" })
+    { name = "Editing", maps = {
+        { "n", "<F7>",         ":!chmod a+x %<CR>",                      "Make file executable" },
+        { "n", "<C-p>",        '"_cw<C-r>0<Esc>',                        "Paste over word",           { silent = true } },
+        { "v", "<C-p>",        '"_c<C-r>0<Esc>',                         "Paste over selection",      { silent = true } },
+        { "n", "<C-q>",        "q",                                       "Start/stop macro recording" },
+        { "n", "<Leader>m",    "mmHmt:%s/<C-V><CR>//ge<CR>'tzt'm",        "Remove Windows ^M" },
+        { "n", "<leader>p",    '"+p',                                     "Paste from system clipboard" },
+        { "v", "<leader>y",    '"+y',                                     "Copy to system clipboard" },
+        { "v", "<leader>si",   ':lua require("utils.helpers").incr()<CR>',"Auto increment numbers" },
+        { "n", "<leader>rr",   function()
+            for name, _ in pairs(package.loaded) do
+                if name:match('^core') or name:match('^utils') or name:match('^verilog') then
+                    package.loaded[name] = nil
+                end
+            end
+            dofile(vim.env.MYVIMRC)
+            vim.notify("Config reloaded! (Restart for plugin changes)", vim.log.levels.INFO)
+        end, "Reload config" },
+    }},
 
--- Visual mode auto-increment for duplicated lines
-vim.keymap.set('v', '<leader>si', ':lua require("utils.helpers").incr()<cr>', { desc = "Auto increment numbers" })
+    { name = "Command Mode", maps = {
+        { "c", "$h",    "e ~/",           "Edit home directory" },
+        { "c", "$d",    "e ~/Desktop/",   "Edit Desktop directory" },
+        { "c", "$j",    "e ./",           "Edit current directory" },
+        { "c", "$c",    "e <C-\\>eCurrentFileDir('e')<CR>", "Edit current file directory" },
+        { "c", "$q",    "<C-\\>eDeleteTillSlash()<CR>",      "Delete back to last slash" },
+        { "c", "<C-A>", "<Home>",  "Beginning of line" },
+        { "c", "<C-E>", "<End>",   "End of line" },
+        { "c", "<C-K>", "<C-U>",   "Delete to end of line" },
+        { "c", "<C-P>", "<Up>",    "Previous command" },
+        { "c", "<C-N>", "<Down>",  "Next command" },
+    }},
 
--- Copy/paste helpers
-vim.keymap.set('v', '<leader>y', '"+y', { desc = "Copy to system clipboard" })
-vim.keymap.set('n', '<leader>p', '"+p', { desc = "Paste from system clipboard" })
+    { name = "Help", maps = {
+        { "n", "<leader>?", function() require('utils.help').show_help() end, "Show keybindings help" },
+    }},
 
--- Buffer navigation
-vim.keymap.set('n', '<leader>bn', ':bnext<cr>', { desc = "Next buffer" })
-vim.keymap.set('n', '<leader>bp', ':bprevious<cr>', { desc = "Previous buffer" })
-vim.keymap.set('n', '<leader>bf', ':bfirst<cr>', { desc = "First buffer" })
-vim.keymap.set('n', '<leader>bl', ':blast<cr>', { desc = "Last buffer" })
+}
 
--- Quick fix list
-vim.keymap.set('n', '<leader>cn', ':cnext<cr>', { desc = "Next quickfix" })
-vim.keymap.set('n', '<leader>cp', ':cprevious<cr>', { desc = "Previous quickfix" })
-vim.keymap.set('n', '<leader>co', ':copen<cr>', { desc = "Open quickfix" })
-vim.keymap.set('n', '<leader>cc', ':cclose<cr>', { desc = "Close quickfix" })
-
--- Reload configuration (for simple changes only - restart for plugins)
-vim.keymap.set('n', '<leader>rr', function()
-    -- Clear lua module cache
-    for name, _ in pairs(package.loaded) do
-        if name:match('^core') or name:match('^utils') or name:match('^verilog') then
-            package.loaded[name] = nil
-        end
+-- Register all keymaps
+for _, section in ipairs(sections) do
+    for _, map in ipairs(section.maps) do
+        local mode, lhs, rhs, desc, extra = map[1], map[2], map[3], map[4], map[5] or {}
+        vim.keymap.set(mode, lhs, rhs, vim.tbl_extend('force', { desc = desc }, extra))
     end
-    -- Reload config
-    dofile(vim.env.MYVIMRC)
-    vim.notify("Config reloaded! (Restart for plugin changes)", vim.log.levels.INFO)
-end, { desc = "Reload config" })
+end
 
--- Easier window resizing
-vim.keymap.set('n', '<C-w>+', ':resize +5<cr>', { desc = "Increase window height" })
-vim.keymap.set('n', '<C-w>-', ':resize -5<cr>', { desc = "Decrease window height" })
-vim.keymap.set('n', '<C-w>>', ':vertical resize +5<cr>', { desc = "Increase window width" })
-vim.keymap.set('n', '<C-w><', ':vertical resize -5<cr>', { desc = "Decrease window width" })
-
--- Show custom keybindings help
-vim.keymap.set('n', '<leader>help', function()
-    require('utils.help').show_help()
-end, { desc = "Show keybindings help" })
+return { sections = sections }

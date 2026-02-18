@@ -1,76 +1,77 @@
 -- nvim-treesitter Configuration
--- NEW: Better syntax highlighting
+-- NOTE: nvim-treesitter was fully rewritten in 2025; configs module is gone.
+-- See: https://github.com/nvim-treesitter/nvim-treesitter/blob/main/README.md
+--
+-- DISABLED: Marginal benefit for this workflow.
+--   - Primary language (Verilog/SystemVerilog) is excluded; verilog_systemverilog.vim is used instead.
+--   - Remaining benefit is modest highlighting/indent improvements for Python, bash, YAML, C, etc.
+--   - Textobject keymaps (af/if/]m/etc.) are available but not actively used.
+-- To re-enable: change `enabled = false` to `enabled = true` and run :TSInstall for desired parsers.
+
+-- -- Filetypes to enable treesitter highlighting (excludes verilog - use syntax plugin instead)
+-- local highlight_filetypes = {
+--     "lua", "vim", "python", "bash",
+--     "yaml", "json", "toml",
+--     "make", "cmake",
+--     "c", "cpp",
+--     "markdown",
+-- }
+--
+-- -- Filetypes to enable treesitter indentation
+-- local indent_filetypes = {
+--     "lua", "vim", "python", "bash",
+--     "json", "toml",
+--     "make", "cmake",
+--     "c", "cpp",
+--     "markdown",
+-- }
 
 return {
     "nvim-treesitter/nvim-treesitter",
+    enabled = false,
     build = ":TSUpdate",
-    event = { "BufReadPost", "BufNewFile" },
+    lazy = false,  -- Does not support lazy-loading (new rewrite)
     dependencies = {
         "nvim-treesitter/nvim-treesitter-textobjects",
     },
-    opts = {
-        ensure_installed = {
-            "lua", "vim", "vimdoc",
-            "verilog",
-            "python", "bash",
-            "yaml", "json", "toml",
-            "make", "cmake",
-            "c", "cpp",
-            "markdown", "markdown_inline",
-        },
-        highlight = {
-            enable = true,
-            disable = { "verilog" },  -- Use verilog_systemverilog.vim syntax instead
-            additional_vim_regex_highlighting = false,
-        },
-        indent = {
-            enable = true,
-            -- Disable for languages where it causes issues
-            disable = { "yaml" },
-        },
-        incremental_selection = {
-            enable = true,
-            keymaps = {
-                init_selection = "<C-space>",
-                node_incremental = "<C-space>",
-                scope_incremental = false,
-                node_decremental = "<bs>",
-            },
-        },
-        textobjects = {
-            select = {
-                enable = true,
-                lookahead = true,
-                keymaps = {
-                    ["af"] = "@function.outer",
-                    ["if"] = "@function.inner",
-                    ["ac"] = "@class.outer",
-                    ["ic"] = "@class.inner",
-                },
-            },
-            move = {
-                enable = true,
-                set_jumps = true,
-                goto_next_start = {
-                    ["]m"] = "@function.outer",
-                    ["]]"] = "@class.outer",
-                },
-                goto_next_end = {
-                    ["]M"] = "@function.outer",
-                    ["]["] = "@class.outer",
-                },
-                goto_previous_start = {
-                    ["[m"] = "@function.outer",
-                    ["[["] = "@class.outer",
-                },
-                goto_previous_end = {
-                    ["[M"] = "@function.outer",
-                    ["[]"] = "@class.outer",
-                },
-            },
-        },
-    },
-    config = function(_, opts)
-        require("nvim-treesitter.configs").setup(opts)
+    config = function()
+        -- Enable treesitter highlighting per filetype
+        vim.api.nvim_create_autocmd("FileType", {
+            pattern = highlight_filetypes,
+            callback = function() vim.treesitter.start() end,
+        })
+
+        -- Enable treesitter indentation per filetype
+        vim.api.nvim_create_autocmd("FileType", {
+            pattern = indent_filetypes,
+            callback = function()
+                vim.wo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+            end,
+        })
+
+        -- Textobjects: configure options
+        require("nvim-treesitter-textobjects").setup({
+            select = { lookahead = true },
+            move  = { set_jumps = true },
+        })
+
+        -- Textobjects: select keymaps
+        local select = require("nvim-treesitter-textobjects.select")
+        local function sel(q) return function() select.select_textobject(q, "textobjects") end end
+        vim.keymap.set({ "x", "o" }, "af", sel("@function.outer"), { desc = "outer function" })
+        vim.keymap.set({ "x", "o" }, "if", sel("@function.inner"), { desc = "inner function" })
+        vim.keymap.set({ "x", "o" }, "ac", sel("@class.outer"),    { desc = "outer class" })
+        vim.keymap.set({ "x", "o" }, "ic", sel("@class.inner"),    { desc = "inner class" })
+
+        -- Textobjects: move keymaps
+        local move = require("nvim-treesitter-textobjects.move")
+        vim.keymap.set("n", "]m",  function() move.goto_next_start("@function.outer",  "textobjects") end, { desc = "next function start" })
+        vim.keymap.set("n", "]]",  function() move.goto_next_start("@class.outer",     "textobjects") end, { desc = "next class start" })
+        vim.keymap.set("n", "]M",  function() move.goto_next_end("@function.outer",    "textobjects") end, { desc = "next function end" })
+        vim.keymap.set("n", "][",  function() move.goto_next_end("@class.outer",       "textobjects") end, { desc = "next class end" })
+        vim.keymap.set("n", "[m",  function() move.goto_previous_start("@function.outer", "textobjects") end, { desc = "prev function start" })
+        vim.keymap.set("n", "[[",  function() move.goto_previous_start("@class.outer",    "textobjects") end, { desc = "prev class start" })
+        vim.keymap.set("n", "[M",  function() move.goto_previous_end("@function.outer",   "textobjects") end, { desc = "prev function end" })
+        vim.keymap.set("n", "[]",  function() move.goto_previous_end("@class.outer",      "textobjects") end, { desc = "prev class end" })
     end,
 }

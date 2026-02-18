@@ -14,17 +14,6 @@ return {
         },
     },
     cmd = "Telescope",
-    keys = {
-        { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find files" },
-        { "<leader>fg", "<cmd>Telescope live_grep<cr>", desc = "Live grep" },
-        { "<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Find buffers" },
-        { "<leader>fh", "<cmd>Telescope help_tags<cr>", desc = "Help tags" },
-        { "<leader>fo", "<cmd>Telescope oldfiles<cr>", desc = "Recent files" },
-        { "<leader>fc", "<cmd>Telescope commands<cr>", desc = "Commands" },
-        { "<leader>fk", "<cmd>Telescope keymaps<cr>", desc = "Keymaps" },
-        { "<leader>fs", "<cmd>Telescope grep_string<cr>", desc = "Grep string under cursor" },
-        { "<leader>fr", "<cmd>Telescope resume<cr>", desc = "Resume last search" },
-    },
     opts = {
         defaults = {
             file_ignore_patterns = {

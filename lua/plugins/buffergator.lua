@@ -3,10 +3,6 @@
 
 return {
     "jerias/vim-buffergator",  -- Your custom fork
-    keys = {
-        { "<leader>b", "<cmd>BuffergatorToggle<cr>", desc = "Toggle Buffergator" },
-        { "<F3>", "<cmd>BuffergatorToggle<cr>", desc = "Toggle Buffergator" },
-    },
     config = function()
         -- Buffergator configuration
         vim.g.buffergator_viewport_split_policy = "L"  -- Open on left side

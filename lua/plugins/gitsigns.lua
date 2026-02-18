@@ -4,17 +4,6 @@
 return {
     "lewis6991/gitsigns.nvim",
     event = { "BufReadPre", "BufNewFile" },
-    keys = {
-        { "<F6>", function() require('gitsigns').toggle_word_diff() end, desc = "Toggle word diff" },
-        { "]c", function() require('gitsigns').next_hunk() end, desc = "Next git hunk" },
-        { "[c", function() require('gitsigns').prev_hunk() end, desc = "Previous git hunk" },
-        { "<leader>hs", function() require('gitsigns').stage_hunk() end, desc = "Stage hunk" },
-        { "<leader>hu", function() require('gitsigns').undo_stage_hunk() end, desc = "Undo stage hunk" },
-        { "<leader>hr", function() require('gitsigns').reset_hunk() end, desc = "Reset hunk" },
-        { "<leader>hp", function() require('gitsigns').preview_hunk() end, desc = "Preview hunk" },
-        { "<leader>hb", function() require('gitsigns').blame_line({full=true}) end, desc = "Blame line (popup)" },
-        { "<leader>tb", function() require('gitsigns').toggle_current_line_blame() end, desc = "Toggle inline blame" },
-    },
     opts = {
         signs = {
             add          = { text = '+' },

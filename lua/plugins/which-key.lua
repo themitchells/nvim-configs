@@ -27,9 +27,11 @@ return {
             { "<leader>c", group = "Quickfix" },
             { "<leader>f", group = "Find (Telescope)" },
             { "<leader>h", group = "Git Hunks" },
-            { "<leader>s", group = "Spell/Scratch" },
+            { "<leader>n", group = "File Tree" },
+            { "<leader>r", group = "Reload" },
             { "<leader>t", group = "Tabs" },
-            { "<leader>r", group = "Refactor/Reload" },
+            { "<leader>u", group = "UI Toggles" },
+            { "<leader>v", group = "Verilog" },
         })
     end,
 }

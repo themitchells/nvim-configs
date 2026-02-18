@@ -4,12 +4,6 @@
 return {
     "nvim-tree/nvim-tree.lua",
     dependencies = { "nvim-tree/nvim-web-devicons" },
-    keys = {
-        { "<F4>", "<cmd>NvimTreeToggle<cr>", desc = "Toggle NvimTree" },
-        { "<leader>nn", "<cmd>NvimTreeToggle<cr>", desc = "Toggle NvimTree" },
-        { "<leader>nf", "<cmd>NvimTreeFindFile<cr>", desc = "Find file in tree" },
-        { "<leader>nc", "<cmd>NvimTreeCollapse<cr>", desc = "Collapse tree" },
-    },
     opts = {
         -- Match NERDTree-like behavior
         view = {

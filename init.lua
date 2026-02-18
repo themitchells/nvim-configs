@@ -18,5 +18,3 @@ if ok then
     pcall(tinted.setup)
 end
 
--- Load Verilog-specific keymaps
-require('verilog.keymaps')

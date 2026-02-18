@@ -18,9 +18,5 @@ return {
             zindex = 20,  -- Z-index of context window
         })
 
-        -- Keybinding to jump to context (go to function/module definition)
-        vim.keymap.set("n", "[c", function()
-            require("treesitter-context").go_to_context()
-        end, { silent = true, desc = "Jump to context (scope start)" })
     end,
 }

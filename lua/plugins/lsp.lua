@@ -17,7 +17,7 @@ return {
         "hrsh7th/cmp-buffer",
         "hrsh7th/cmp-path",
     },
-    event = { "BufReadPre", "BufNewFile" },
+    lazy = false,
     init = function()
         -- Suppress lspconfig deprecation warning (runs before plugin loads)
         if not vim.g._original_notify then

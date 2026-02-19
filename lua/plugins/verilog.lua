@@ -3,7 +3,7 @@
 
 return {
     "jerias/verilog_systemverilog.vim",
-    ft = { "verilog", "systemverilog", "verilog_systemverilog" },
+    lazy = false,
     config = function()
         -- Disable indent for:
         --   eos = end-of-statement (prevents extra indent on );)

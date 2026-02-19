@@ -4,7 +4,7 @@
 return {
     "lukas-reineke/indent-blankline.nvim",
     main = "ibl",
-    event = { "BufReadPost", "BufNewFile" },
+    lazy = false,
     opts = {
         indent = {
             char = "│",  -- Vertical line character

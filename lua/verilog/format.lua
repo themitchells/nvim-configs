@@ -25,11 +25,11 @@ local M = {}
 --------------------------------------------------------------------------------
 
 local CONSTANTS = {
-    PORT_COLUMN = 48,        -- Where (signal) starts after .portname
-    COMMENT_COLUMN = 88,     -- Where // comment starts
-    BASE_INDENT = "    ",    -- 4 spaces for module/instance
-    PORT_INDENT = "        ", -- 8 spaces for port maps
-    COMMENT_INDENT = "        " -- 8 spaces for comment lines
+    PORT_COLUMN    = 48,         -- Where (signal) starts after .portname
+    COMMENT_COLUMN = 88,         -- Where // comment starts
+    BASE_INDENT    = "    ",     -- 4 spaces for module/instance
+    PORT_INDENT    = "        ", -- 8 spaces for port maps
+    COMMENT_INDENT = "        "  -- 8 spaces for comment lines
 }
 
 -- Global module name (mimics vim's g:moduleName)
@@ -38,13 +38,6 @@ vim.g.verilog_moduleName = "dummy_inst"
 -- Helper function to execute normal mode commands
 local function normal(cmd)
     vim.cmd('normal! ' .. cmd)
-end
-
--- Helper function to insert a newline after current line
-local function insert_line_below()
-    local line = vim.fn.line('.')
-    vim.fn.append(line, '')
-    normal('j')
 end
 
 --------------------------------------------------------------------------------
@@ -91,27 +84,31 @@ local function extract_signal_name(line, is_parameter)
     -- Remove synthesis directives: (* ... *)
     work_line = work_line:gsub('%(%*.*%*%)', "")
 
+    -- Normalize: strip whitespace before closing parentheses
+    -- (handles re-formatting when signame has trailing space e.g. .port (signame ),)
+    work_line = work_line:gsub('%s+%)', ')')
+
     -- Special case: bus delimiter {a,b,c}
-    -- In Verilog: output wire {a, b, c}, means multiple signals
-    -- Extract the entire {a, b, c} expression
+    -- In Verilog: .port({a, b, c}) means bus concatenation
     if work_line:match("{") and not is_parameter then
-        -- First try: with parentheses (.port({a, b, c}))
-        local match = work_line:match(".-%((.*{.*})%).*")
+        -- Scope-limited match: [^%)]*  cannot cross a ) boundary, preventing greedy overshoot
+        local match = work_line:match("%(([^%)]*{[^%)]*}[^%)]*)%)")
         if match then
-            return match
+            return match:match("^%s*(.-)%s*$")  -- trim whitespace
         end
         -- Second try: without parentheses (output wire {a, b, c})
         match = work_line:match("({.-})")
         if match then
-            return match
+            return match:match("^%s*(.-)%s*$")
         end
     end
 
     -- Special case: already formatted .port(signal)
     if work_line:match("^ *%.") then
-        local sig = work_line:match("%((.-)%)")
+        local sig = work_line:match("%(([^%)]*)")
         if sig then
             sig = sig:gsub(",", ""):gsub("%)", "")
+            sig = sig:match("^%s*(.-)%s*$")  -- trim whitespace
             return sig
         end
     end
@@ -132,15 +129,16 @@ local function extract_signal_name(line, is_parameter)
                 break
             end
         end
-        -- If no = found, might be in parameter port list
+        -- If no = found, use last non-array-subscript token (same logic as port branch)
         if not signal or signal == "" then
-            -- parameter integer NAME or parameter type NAME
-            if work_line:match("integer") or work_line:match("int") or
-               work_line:match("string") or work_line:match("type") then
-                signal = tokens[3] or ""
-            else
-                signal = tokens[2] or ""
+            for i = #tokens, 1, -1 do
+                local tok = tokens[i]:gsub(",",""):gsub(";",""):gsub("%(",""):gsub("%)","")
+                if not tok:match("^%[") and tok ~= "" and tok ~= "parameter" then
+                    signal = tok
+                    break
+                end
             end
+            signal = signal or ""
         end
     else
         -- Port declaration: direction type [width] NAME [unpacked_dims] [,]
@@ -199,6 +197,9 @@ function M.format_to_instance_line()
     local mywrap = vim.wo.wrap
     vim.wo.wrap = false
 
+    -- Save window view to restore cursor position after processing
+    local winview = vim.fn.winsaveview()
+
     local instCurLine = vim.fn.getline('.')
 
     -- Get next line
@@ -209,7 +210,6 @@ function M.format_to_instance_line()
     -- Pure comment lines
     if instCurLine:match("^ */") then
         -- Comment line - just ensure indentation
-        -- Remove leading whitespace and add proper indent
         local trimmed = instCurLine:match("^%s*(.*)$")
         vim.fn.setline('.', CONSTANTS.COMMENT_INDENT .. trimmed)
 
@@ -217,9 +217,12 @@ function M.format_to_instance_line()
     elseif instCurLine == "" then
         -- Skip blank lines
 
+    -- Preprocessor directives (`ifdef, `ifndef, `else, `endif, etc.)
+    elseif instCurLine:match("^ *`") then
+        -- Preserve content; indentation handled by ==
+
     -- Module declaration
     elseif instCurLine:match("^ *module") then
-        -- Store module name
         local parts = vim.split(instCurLine, "%s+", { trimempty = true })
         if parts[2] then
             vim.g.verilog_moduleName = parts[2]
@@ -229,19 +232,16 @@ function M.format_to_instance_line()
             vim.fn.setline('.', CONSTANTS.BASE_INDENT .. vim.g.verilog_moduleName)
 
             if instNextLine:match("^ *%(") then
-                insert_line_below()
-                vim.fn.setline('.', CONSTANTS.BASE_INDENT .. "u_" .. vim.g.verilog_moduleName)
-                normal('k')
+                vim.fn.append(vim.fn.line('.'), CONSTANTS.BASE_INDENT .. "u_" .. vim.g.verilog_moduleName)
             end
 
             if instCurLine:match("#%( *$") then
-                insert_line_below()
-                vim.fn.setline('.', CONSTANTS.BASE_INDENT .. "#(")
-                normal('k')
+                vim.fn.append(vim.fn.line('.'), CONSTANTS.BASE_INDENT .. "#(")
             elseif instCurLine:match("%( *$") then
-                insert_line_below()
-                vim.fn.setline('.', CONSTANTS.BASE_INDENT .. "(")
-                normal('k')
+                -- Non-parametric module with paren on same line - insert instance name then "("
+                vim.fn.append(vim.fn.line('.'),     CONSTANTS.BASE_INDENT .. "u_" .. vim.g.verilog_moduleName)
+                vim.fn.append(vim.fn.line('.') + 1, CONSTANTS.BASE_INDENT .. "(")
+                vim.g.verilog_moduleName = "dummy_inst"
             end
         end
 
@@ -260,9 +260,7 @@ function M.format_to_instance_line()
         local newLine = instCurLine:gsub("^ *#%(", "")
         vim.fn.setline('.', newLine)
         normal('k')
-        insert_line_below()
-        vim.fn.setline('.', "    #(")
-        normal('k')
+        vim.fn.append(vim.fn.line('.'), CONSTANTS.BASE_INDENT .. "#(")
 
     -- Just indent stand-alone "("
     elseif instCurLine:match("^ *%( *$") then
@@ -274,9 +272,7 @@ function M.format_to_instance_line()
         local newLine = instCurLine:gsub("^ *%(", "")
         vim.fn.setline('.', newLine)
         normal('k')
-        insert_line_below()
-        vim.fn.setline('.', "    (")
-        normal('k')
+        vim.fn.append(vim.fn.line('.'), CONSTANTS.BASE_INDENT .. "(")
 
     -- Just indent stand-alone ");"
     elseif instCurLine:match("^ *%);") then
@@ -287,40 +283,65 @@ function M.format_to_instance_line()
     elseif instCurLine:match("%)%; *$") then
         local newLine = instCurLine:gsub("%)%;", "")
         vim.fn.setline('.', newLine)
-        insert_line_below()
-        vim.fn.setline('.', CONSTANTS.BASE_INDENT .. ");")
-        normal('k')
+        vim.fn.append(vim.fn.line('.'), CONSTANTS.BASE_INDENT .. ");")
         M.format_to_instance_line()
+
+    -- Split ")(" - parameter list close followed immediately by port list open
+    elseif instCurLine:match("^ *%)%( *$") then
+        vim.fn.setline('.', CONSTANTS.BASE_INDENT .. ")")
+        vim.fn.append(vim.fn.line('.'),     CONSTANTS.BASE_INDENT .. "u_" .. vim.g.verilog_moduleName)
+        vim.fn.append(vim.fn.line('.') + 1, CONSTANTS.BASE_INDENT .. "(")
+        vim.g.verilog_moduleName = "dummy_inst"
 
     -- Closing parenthesis logic
     elseif instCurLine:match("^ *%)") then
-        -- Need to check two lines ahead
-        normal('jj')
-        local instNextNextLine = vim.fn.getline('.')
-        normal('kk')
+        -- Check if followed by synthesis/preprocessor block ending in standalone ";"
+        -- E.g.  )  /  `ifdef SYN / /* synthesis ... */ / `endif / ;
+        local cur_lnum = vim.fn.line('.')
+        local scan = cur_lnum + 1
+        local semi_lnum = -1
+        while scan <= vim.fn.line('$') do
+            local scanline = vim.fn.getline(scan)
+            if scanline:match("^ *; *$") then
+                semi_lnum = scan
+                break
+            elseif scanline:match("^ *$") or scanline:match("^ *`") or scanline:match("^ */") then
+                scan = scan + 1
+            else
+                break
+            end
+        end
 
-        if instNextNextLine:match("^ *%( *$") then
-            -- Just format
-            local newLine = instCurLine:gsub("^ *", CONSTANTS.BASE_INDENT)
-            vim.fn.setline('.', newLine)
+        if semi_lnum > 0 then
+            -- Merge: delete intervening lines and replace ")" with ");"
+            -- Use explicit line number (not '.') since delete may reposition cursor
+            vim.cmd(tostring(cur_lnum + 1) .. "," .. tostring(semi_lnum) .. "d")
+            vim.fn.setline(cur_lnum, CONSTANTS.BASE_INDENT .. ");")
         else
-            -- Write module instance name below parameter ")"
-            local newLine = instCurLine:gsub("^ *", CONSTANTS.BASE_INDENT)
-            vim.fn.setline('.', newLine)
-            insert_line_below()
-            vim.fn.setline('.', "    u_" .. vim.g.verilog_moduleName)
-            normal('k')
-            -- Clear after use as instance
-            vim.g.verilog_moduleName = "dummy_inst"
+            -- Need to check two lines ahead
+            normal('jj')
+            local instNextNextLine = vim.fn.getline('.')
+            normal('kk')
+
+            if instNextNextLine:match("^ *%( *$") then
+                -- Just format
+                local newLine = instCurLine:gsub("^ *", CONSTANTS.BASE_INDENT)
+                vim.fn.setline('.', newLine)
+            else
+                -- Write module instance name below parameter ")"
+                local newLine = instCurLine:gsub("^ *", CONSTANTS.BASE_INDENT)
+                vim.fn.setline('.', newLine)
+                vim.fn.append(vim.fn.line('.'), CONSTANTS.BASE_INDENT .. "u_" .. vim.g.verilog_moduleName)
+                -- Clear after use as instance
+                vim.g.verilog_moduleName = "dummy_inst"
+            end
         end
 
     -- Separate ") from rest of line
     elseif instCurLine:match("%) *$") and not instNextLine:match("^ *%)") and not instCurLine:match("%(") then
         local newLine = instCurLine:gsub("%)", "")
         vim.fn.setline('.', newLine)
-        insert_line_below()
-        vim.fn.setline('.', CONSTANTS.BASE_INDENT .. ")")
-        normal('k')
+        vim.fn.append(vim.fn.line('.'), CONSTANTS.BASE_INDENT .. ")")
         M.format_to_instance_line()
 
     -- Bare word module/instance name above open parentheses - do nothing
@@ -366,6 +387,9 @@ function M.format_to_instance_line()
         vim.fn.setline('.', formatted)
     end
 
+    -- Restore window view (cursor position) before re-indenting
+    vim.fn.winrestview(winview)
+
     -- Restore previous wrap setting
     if mywrap then
         vim.wo.wrap = true
@@ -387,12 +411,16 @@ end
 
 -- Format entire instance (calls format_to_instance_line repeatedly)
 function M.format_to_instance()
+    vim.g.verilog_moduleName = "dummy_inst"
     local winview = vim.fn.winsaveview()
     local curline = ""
 
     while not curline:match("^ *%);") do
         curline = vim.fn.getline('.')
         M.format_to_instance_line()
+        if vim.fn.getline('.'):match("^ *%);") then
+            break
+        end
         normal('j')
     end
 

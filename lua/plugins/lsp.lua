@@ -50,7 +50,6 @@ return {
                 "lua_ls",   -- Lua LSP
                 "bashls",   -- Bash LSP
             },
-            automatic_installation = true,
             automatic_enable = {
                 exclude = { "verible" },  -- Don't auto-enable verible, use manual config below
             },
@@ -159,8 +158,8 @@ return {
                 end, vim.tbl_extend('force', opts, { desc = "Format buffer" }))
 
                 -- Diagnostics
-                vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, vim.tbl_extend('force', opts, { desc = "Previous diagnostic" }))
-                vim.keymap.set('n', ']d', vim.diagnostic.goto_next, vim.tbl_extend('force', opts, { desc = "Next diagnostic" }))
+                vim.keymap.set('n', '[d', function() vim.diagnostic.jump({ count = -1 }) end, vim.tbl_extend('force', opts, { desc = "Previous diagnostic" }))
+                vim.keymap.set('n', ']d', function() vim.diagnostic.jump({ count =  1 }) end, vim.tbl_extend('force', opts, { desc = "Next diagnostic" }))
                 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, vim.tbl_extend('force', opts, { desc = "Show diagnostic" }))
                 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, vim.tbl_extend('force', opts, { desc = "Diagnostic list" }))
             end,
@@ -176,17 +175,17 @@ return {
                 source = "always",
                 border = "rounded",
             },
-            signs = true,
+            signs = {
+                text = {
+                    [vim.diagnostic.severity.ERROR] = "E",
+                    [vim.diagnostic.severity.WARN]  = "W",
+                    [vim.diagnostic.severity.HINT]  = "H",
+                    [vim.diagnostic.severity.INFO]  = "I",
+                },
+            },
             underline = true,
             update_in_insert = false,
             severity_sort = true,
         })
-
-        -- Diagnostic signs
-        local signs = { Error = "E", Warn = "W", Hint = "H", Info = "I" }
-        for type, icon in pairs(signs) do
-            local hl = "DiagnosticSign" .. type
-            vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
-        end
     end,
 }

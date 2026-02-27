@@ -17,7 +17,7 @@ return {
         numhl      = false,
         linehl     = false,
         word_diff  = false,
-        watch_gitdir = {
+        watch_index = {
             interval = 1000,
             follow_files = true
         },

@@ -50,9 +50,6 @@ vim.opt.hlsearch = true
 -- Makes search act like search in modern browsers
 vim.opt.incsearch = true
 
--- Don't redraw while executing macros (good performance config)
-vim.opt.lazyredraw = true
-
 -- For regular expressions turn magic on
 vim.opt.magic = true
 
@@ -79,9 +76,6 @@ if vim.fn.has("gui_running") == 1 then
     vim.opt.guioptions:remove('e')
     vim.opt.guitablabel = '%M %t'
 end
-
--- Set utf8 as standard encoding and en_US as the standard language
-vim.opt.encoding = 'utf8'
 
 -- Use Unix as the standard file type
 vim.opt.fileformats = 'unix,dos,mac'
@@ -233,6 +227,7 @@ vim.opt.sidescrolloff = 5
 -- Split behavior
 vim.opt.splitbelow = true
 vim.opt.splitright = true
+vim.opt.equalalways = false  -- Don't equalize window sizes when splits open/close
 
 -- Update time (for better experience)
 vim.opt.updatetime = 300

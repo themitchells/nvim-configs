@@ -78,12 +78,14 @@ function M.customize_highlights()
     end
 
     if colors.gui0A and colors.gui01 then
-        vim.api.nvim_set_hl(0, 'VertSplit', {
+        local split_hl = {
             fg = ensure_hash(colors.gui0A),
             bg = ensure_hash(colors.gui01),
             ctermfg = tonumber(colors.cterm0A),
             ctermbg = tonumber(colors.cterm01),
-        })
+        }
+        vim.api.nvim_set_hl(0, 'VertSplit', split_hl)
+        vim.api.nvim_set_hl(0, 'WinSeparator', split_hl)
     end
 
     -- Custom color columns (from original config)

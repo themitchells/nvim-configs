@@ -57,6 +57,15 @@ vim.api.nvim_create_autocmd('FileType', {
     end,
 })
 
+-- Disable sign column in sidebar/tool windows
+vim.api.nvim_create_autocmd('FileType', {
+    group = filetype_group,
+    pattern = { 'buffergator', 'NvimTree' },
+    callback = function()
+        vim.opt_local.signcolumn = 'no'
+    end,
+})
+
 -- Verilog/SystemVerilog filetype detection
 local verilog_group = vim.api.nvim_create_augroup('VerilogFiletype', { clear = true })
 vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, {

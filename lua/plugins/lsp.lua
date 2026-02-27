@@ -1,35 +1,17 @@
 -- LSP Configuration
--- NEW: Language Server Protocol support
+-- Uses native Neovim 0.11+ LSP API (vim.lsp.config / vim.lsp.enable)
+-- nvim-lspconfig is no longer required
 
 return {
-    "neovim/nvim-lspconfig",
+    "williamboman/mason.nvim",
     dependencies = {
-        {
-            "williamboman/mason.nvim",
-            lazy = false,  -- Must load immediately for fresh installs
-        },
-        {
-            "williamboman/mason-lspconfig.nvim",
-            lazy = false,  -- Must load immediately to install servers before LSP attaches
-        },
+        "williamboman/mason-lspconfig.nvim",
         "hrsh7th/nvim-cmp",
         "hrsh7th/cmp-nvim-lsp",
         "hrsh7th/cmp-buffer",
         "hrsh7th/cmp-path",
     },
     lazy = false,
-    init = function()
-        -- Suppress lspconfig deprecation warning (runs before plugin loads)
-        if not vim.g._original_notify then
-            vim.g._original_notify = vim.notify
-            vim.notify = function(msg, ...)
-                if msg:match("lspconfig") then
-                    return
-                end
-                vim.g._original_notify(msg, ...)
-            end
-        end
-    end,
     config = function()
 
         -- Mason setup
@@ -44,6 +26,8 @@ return {
             }
         })
 
+        -- mason-lspconfig: install servers and auto-enable all except verible
+        -- (verible is manually configured and enabled below)
         require("mason-lspconfig").setup({
             ensure_installed = {
                 "verible",  -- Verilog/SystemVerilog LSP
@@ -51,7 +35,7 @@ return {
                 "bashls",   -- Bash LSP
             },
             automatic_enable = {
-                exclude = { "verible" },  -- Don't auto-enable verible, use manual config below
+                exclude = { "verible" },
             },
         })
 
@@ -93,49 +77,39 @@ return {
             }),
         })
 
-        -- LSP capabilities for completion
+        -- Set LSP capabilities globally (applies to all servers)
         local capabilities = require('cmp_nvim_lsp').default_capabilities()
+        vim.lsp.config('*', { capabilities = capabilities })
 
-        local lspconfig = require("lspconfig")
-
-        -- Verilog/SystemVerilog LSP (Verible)
-        lspconfig.verible.setup({
-            capabilities = capabilities,
+        -- Verilog/SystemVerilog LSP (Verible) - custom cmd, manually enabled
+        vim.lsp.config('verible', {
             cmd = {
                 "verible-verilog-ls",
                 "--rules_config=" .. vim.fn.expand("~/.config/nvim/verible-rules.conf")
             },
             filetypes = { "verilog", "systemverilog", "verilog_systemverilog" },
             root_dir = function(fname)
-                return lspconfig.util.find_git_ancestor(fname) or vim.fn.getcwd()
+                return vim.fs.root(fname, '.git') or vim.fn.getcwd()
             end,
         })
+        vim.lsp.enable('verible')
 
         -- Lua LSP (.luarc.json in workspace root defines vim global)
-        -- Only setup if lua-language-server is installed
-        if vim.fn.executable("lua-language-server") == 1 then
-            lspconfig.lua_ls.setup({
-                capabilities = capabilities,
-                settings = {
-                    Lua = {
-                        completion = {
-                            callSnippet = "Replace",
-                        },
-                        telemetry = {
-                            enable = false,
-                        },
+        -- mason-lspconfig automatic_enable handles vim.lsp.enable()
+        vim.lsp.config('lua_ls', {
+            settings = {
+                Lua = {
+                    completion = {
+                        callSnippet = "Replace",
+                    },
+                    telemetry = {
+                        enable = false,
                     },
                 },
-            })
-        end
+            },
+        })
 
-        -- Bash LSP
-        -- Only setup if bash-language-server is installed
-        if vim.fn.executable("bash-language-server") == 1 then
-            lspconfig.bashls.setup({
-                capabilities = capabilities,
-            })
-        end
+        -- Bash LSP: no custom config needed, automatic_enable handles everything
 
         -- LSP keymaps (attached when LSP attaches to buffer)
         vim.api.nvim_create_autocmd("LspAttach", {

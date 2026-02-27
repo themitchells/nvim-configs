@@ -165,9 +165,6 @@ vim.opt.laststatus = 2
 -- Format the status line (will be overridden by lualine, so keep simple)
 vim.opt.statusline = '%F%m%r%h %w  CWD: %r%{getcwd()}%h    Line: %l  Column: %c'
 
--- Remap VIM 0 to first non-blank character
-vim.keymap.set('n', '0', '^', { desc = "Go to first non-blank" })
-
 -- Move a line of text using ALT+[jk]
 vim.keymap.set('n', '<M-j>', 'mz:m+<cr>`z', { desc = "Move line down" })
 vim.keymap.set('n', '<M-k>', 'mz:m-2<cr>`z', { desc = "Move line up" })

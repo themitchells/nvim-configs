@@ -57,6 +57,7 @@ require("lazy").setup({
     { import = "plugins.verilog" },
 }, {
     -- Lazy.nvim configuration
+    lockfile = vim.fn.stdpath("state") .. "/lazy-lock.json",
     ui = {
         border = "rounded",
     },

@@ -17,10 +17,6 @@ return {
         numhl      = false,
         linehl     = false,
         word_diff  = false,
-        watch_index = {
-            interval = 1000,
-            follow_files = true
-        },
         attach_to_untracked = true,
         current_line_blame = true,  -- Show git blame inline (enabled)
         current_line_blame_opts = {

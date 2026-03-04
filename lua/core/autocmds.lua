@@ -118,20 +118,6 @@ vim.api.nvim_create_autocmd('BufEnter', {
     end,
 })
 
--- Normalize absolute buffer paths to relative when file is under CWD.
--- Matches Vim's historical behavior: opening nvim /full/path/file shows as relative/file.
-local normalize_group = vim.api.nvim_create_augroup('NormalizeBufferPath', { clear = true })
-vim.api.nvim_create_autocmd({'BufReadPost', 'BufNewFile'}, {
-    group = normalize_group,
-    callback = function()
-        local bufname = vim.api.nvim_buf_get_name(0)
-        if not bufname:match('^/') then return end          -- already relative or special
-        local rel = vim.fn.fnamemodify(bufname, ':.')
-        if not rel:match('^/') then                         -- fnamemodify succeeded in making it relative
-            vim.api.nvim_buf_set_name(0, rel)
-        end
-    end,
-})
 
 -- Return to last edit position when opening files
 vim.api.nvim_create_autocmd('BufReadPost', {

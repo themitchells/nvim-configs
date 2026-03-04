@@ -9,7 +9,7 @@ return {
         vim.g.buffergator_autoexpand_on_split = "L"  -- Open on left side
         vim.g.buffergator_split_size = 30              -- Initial width (autocmd below resizes to content)
         vim.g.buffergator_sort_regime = "filepath"     -- Sort by filepath
-        vim.g.buffergator_show_full_directory_path = 0 -- Show relative paths
+        vim.g.buffergator_show_full_directory_path = 1 -- Show absolute paths (consistent sort regardless of relative/absolute bufnames)
         vim.g.buffergator_suppress_keymaps = 0         -- Use default keymaps
 
         -- Dynamically resize to fit the longest line after content renders.

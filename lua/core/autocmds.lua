@@ -66,6 +66,21 @@ vim.api.nvim_create_autocmd('FileType', {
     end,
 })
 
+-- Custom filetype overrides for PHP-preprocessed project files
+local custom_ft_group = vim.api.nvim_create_augroup('CustomFiletype', { clear = true })
+local custom_ft_map = {
+    ['*.prj.php']     = 'prj',
+    ['*.sta.xdc.php'] = 'sdc',
+    ['*.tcl.php']     = 'tcl',
+}
+for pattern, ft in pairs(custom_ft_map) do
+    vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, {
+        group = custom_ft_group,
+        pattern = pattern,
+        callback = function() vim.bo.filetype = ft end,
+    })
+end
+
 -- Verilog/SystemVerilog filetype detection
 local verilog_group = vim.api.nvim_create_augroup('VerilogFiletype', { clear = true })
 vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, {
@@ -100,6 +115,21 @@ vim.api.nvim_create_autocmd('BufEnter', {
     pattern = '*',
     callback = function()
         require('utils.helpers').auto_restore_win_view()
+    end,
+})
+
+-- Normalize absolute buffer paths to relative when file is under CWD.
+-- Matches Vim's historical behavior: opening nvim /full/path/file shows as relative/file.
+local normalize_group = vim.api.nvim_create_augroup('NormalizeBufferPath', { clear = true })
+vim.api.nvim_create_autocmd({'BufReadPost', 'BufNewFile'}, {
+    group = normalize_group,
+    callback = function()
+        local bufname = vim.api.nvim_buf_get_name(0)
+        if not bufname:match('^/') then return end          -- already relative or special
+        local rel = vim.fn.fnamemodify(bufname, ':.')
+        if not rel:match('^/') then                         -- fnamemodify succeeded in making it relative
+            vim.api.nvim_buf_set_name(0, rel)
+        end
     end,
 })
 

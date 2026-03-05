@@ -44,7 +44,7 @@ return {
             lualine_c = {
                 {
                     'filename',
-                    path = 0, -- Just filename (like airline short path)
+                    path = 4, -- Abbreviated path (e.g. ~/.c/n/lua/plugins/lualine.lua)
                     shorting_target = 40,
                     symbols = {
                         modified = '[+]',

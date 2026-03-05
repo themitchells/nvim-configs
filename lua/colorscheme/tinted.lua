@@ -51,16 +51,14 @@ function M.customize_highlights()
         })
     end
 
-    if colors.gui0A and colors.gui01 then
-        vim.api.nvim_set_hl(0, 'MatchParen', {
-            fg = ensure_hash(colors.gui0A),  -- Yellow/orange text
-            bg = ensure_hash(colors.gui01),  -- Subtle background
-            ctermfg = tonumber(colors.cterm0A),
-            ctermbg = tonumber(colors.cterm01),
-            bold = true,
-            underline = true,  -- Added for better visibility
-        })
-    end
+    vim.api.nvim_set_hl(0, 'MatchParen', {
+        fg = '#000000',  -- Black text for contrast
+        bg = '#af8700',  -- Amber
+        -- bg = '#d7875f',  -- More orange
+        -- bg = '#d7af00',  -- Yellow-orange
+        bold = true,
+        underline = true,
+    })
 
     if colors.gui0B then
         vim.api.nvim_set_hl(0, 'Constant', {

@@ -25,9 +25,9 @@ return {
                     },
                     colored = true,  -- Use colors for diff
                     diff_color = {
-                        added    = { fg = '#5faf5f' },  -- Green
-                        modified = { fg = '#d7af5f' },  -- Yellow
-                        removed  = { fg = '#df5f5f' },  -- Red
+                        added    = 'LualineDiffAdd',
+                        modified = 'LualineDiffChange',
+                        removed  = 'LualineDiffDelete',
                     },
                 },
                 {
@@ -43,31 +43,41 @@ return {
             },
             lualine_c = {
                 {
-                    'filename',
-                    path = 4, -- Abbreviated path (e.g. ~/.c/n/lua/plugins/lualine.lua)
-                    shorting_target = 40,
-                    symbols = {
-                        modified = '[+]',
-                        readonly = '[RO]',
-                        unnamed = '[No Name]',
-                    },
+                    -- Directory portion of path (not bold)
+                    function()
+                        local full = vim.fn.expand('%:~:.')
+                        local dir  = vim.fn.fnamemodify(full, ':h')
+                        if dir == '.' then return '' end
+                        return dir .. '/'
+                    end,
+                    padding = { left = 1, right = 0 },
                     color = function()
-                        -- Colored background section (like airline) - hardcoded for reliability
-                        if vim.bo.modified then
-                            -- Orange background when modified (readable)
-                            return {
-                                fg = '#ffffff',  -- White text
-                                bg = '#d7875f',  -- Orange background
-                                gui = 'bold'
-                            }
-                        else
-                            -- Blue background when NOT modified
-                            return {
-                                fg = '#ffffff',  -- White text
-                                bg = '#5f87af',  -- Blue background
-                                gui = 'bold'
-                            }
-                        end
+                        return vim.bo.modified and 'LualineFilenameModified' or 'LualineFilenameNormal'
+                    end,
+                },
+                {
+                    -- Filename (bold)
+                    function()
+                        local file     = vim.fn.fnamemodify(vim.fn.expand('%:~:.'), ':t')
+                        local modified = vim.bo.modified and '[+]' or ''
+                        if file == '' then return '[No Name]' end
+                        return file .. modified
+                    end,
+                    padding = { left = 0, right = 0 },
+                    color = function()
+                        return vim.bo.modified and 'LualineFilenameModifiedBold' or 'LualineFilenameNormalBold'
+                    end,
+                },
+                {
+                    -- [RO] indicator (not bold)
+                    function()
+                        if vim.bo.readonly then return '[RO]' end
+                        if not vim.bo.modifiable then return '[-]' end
+                        return ''
+                    end,
+                    padding = { left = 0, right = 1 },
+                    color = function()
+                        return vim.bo.modified and 'LualineFilenameModified' or 'LualineFilenameNormal'
                     end,
                 },
             },

@@ -10,7 +10,7 @@ return {
             theme = "auto", -- Will integrate with tinted-theming
             section_separators = '',
             component_separators = '',
-            globalstatus = true,
+            globalstatus = false,
         },
         sections = {
             lualine_a = {'mode'},
@@ -109,14 +109,19 @@ return {
             lualine_y = {'progress'},
             lualine_z = {
                 {
-                    -- Show row/total_rows:column (like airline)
-                    function()
-                        local line = vim.fn.line('.')
-                        local total = vim.fn.line('$')
-                        local col = vim.fn.col('.')
-                        return string.format('%d/%d:%d', line, total, col)
-                    end,
-                }
+                    function() return tostring(vim.fn.line('.')) end,
+                    padding = { left = 1, right = 0 },
+                    color = { gui = 'bold' },
+                },
+                {
+                    function() return string.format('/%d', vim.fn.line('$')) end,
+                    padding = { left = 0, right = 0 },
+                },
+                {
+                    function() return string.format('|%d', vim.fn.col('.')) end,
+                    padding = { left = 0, right = 1 },
+                    color = { gui = 'bold' },
+                },
             }
         },
         inactive_sections = {

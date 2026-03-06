@@ -32,7 +32,6 @@ return {
             ensure_installed = {
                 "verible",  -- Verilog/SystemVerilog LSP
                 "lua_ls",   -- Lua LSP
-                "bashls",   -- Bash LSP
             },
             automatic_enable = {
                 exclude = { "verible" },
@@ -108,8 +107,6 @@ return {
                 },
             },
         })
-
-        -- Bash LSP: no custom config needed, automatic_enable handles everything
 
         -- LSP keymaps (attached when LSP attaches to buffer)
         vim.api.nvim_create_autocmd("LspAttach", {

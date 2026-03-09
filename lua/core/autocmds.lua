@@ -69,7 +69,7 @@ vim.api.nvim_create_autocmd('FileType', {
 -- Custom filetype overrides for PHP-preprocessed project files
 local custom_ft_group = vim.api.nvim_create_augroup('CustomFiletype', { clear = true })
 local custom_ft_map = {
-    ['*.prj.php']     = 'prj',
+    ['*.prj.php']     = 'tcl',
     ['*.sta.xdc.php'] = 'sdc',
     ['*.tcl.php']     = 'tcl',
 }

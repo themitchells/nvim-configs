@@ -23,10 +23,10 @@ vim.api.nvim_create_autocmd('FileType', {
     end,
 })
 
--- Verilog files should not use smartindent (conflicts with syntax)
+-- Verilog files should not use smartindent (conflicts with indent file)
 vim.api.nvim_create_autocmd('FileType', {
     group = filetype_group,
-    pattern = { 'verilog', 'systemverilog', 'verilog_systemverilog' },
+    pattern = 'systemverilog',
     callback = function()
         vim.opt_local.smartindent = false
         vim.opt_local.autoindent = true
@@ -82,13 +82,18 @@ for pattern, ft in pairs(custom_ft_map) do
 end
 
 -- Verilog/SystemVerilog filetype detection
-local verilog_group = vim.api.nvim_create_augroup('VerilogFiletype', { clear = true })
-vim.api.nvim_create_autocmd({'BufNewFile', 'BufRead'}, {
-    group = verilog_group,
-    pattern = {'*.v', '*.vh', '*.vp', '*.sv', '*.svi', '*.svh', '*.svp', '*.sva'},
-    callback = function()
-        vim.bo.filetype = 'verilog_systemverilog'
-    end,
+-- All extensions map to 'systemverilog'
+vim.filetype.add({
+    extension = {
+        v   = 'systemverilog',
+        vh  = 'systemverilog',
+        vp  = 'systemverilog',
+        sv  = 'systemverilog',
+        svi = 'systemverilog',
+        svh = 'systemverilog',
+        svp = 'systemverilog',
+        sva = 'systemverilog',
+    },
 })
 
 -- Window title updates

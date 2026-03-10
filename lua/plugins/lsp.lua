@@ -86,7 +86,7 @@ return {
                 "verible-verilog-ls",
                 "--rules_config=" .. vim.fn.expand("~/.config/nvim/verible-rules.conf")
             },
-            filetypes = { "verilog", "systemverilog", "verilog_systemverilog" },
+            filetypes = { "systemverilog" },
             root_dir = function(fname)
                 return vim.fs.root(fname, '.git') or vim.fn.getcwd()
             end,

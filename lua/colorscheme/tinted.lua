@@ -29,6 +29,7 @@ function M.customize_highlights()
         gui0A = vim.g.base16_gui0A or vim.g.tinted_gui0A,
         gui0B = vim.g.base16_gui0B or vim.g.tinted_gui0B,
         gui0D = vim.g.base16_gui0D or vim.g.tinted_gui0D,
+        gui0F = vim.g.base16_gui0F or vim.g.tinted_gui0F,
         cterm01 = vim.g.base16_cterm01 or vim.g.tinted_cterm01 or "18",
         cterm04 = vim.g.base16_cterm04 or vim.g.tinted_cterm04 or "20",
         cterm0A = vim.g.base16_cterm0A or vim.g.tinted_cterm0A or "11",
@@ -88,6 +89,15 @@ function M.customize_highlights()
         vim.api.nvim_set_hl(0, 'Constant', {
             fg = ensure_hash(colors.gui0B),
             ctermfg = tonumber(colors.cterm0B),
+        })
+    end
+
+    -- Verilog: backtick macros (`ifdef, `define, `include, user macros)
+    -- Use base0F (brown) — distinct from Special/cyan (decl qualifiers) and
+    -- base09/orange (numbers, which includes time literals like 1ns/10ps)
+    if colors.gui0F then
+        vim.api.nvim_set_hl(0, 'verilogGlobal', {
+            fg = ensure_hash(colors.gui0F),
         })
     end
 

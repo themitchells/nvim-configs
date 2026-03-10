@@ -1,13 +1,9 @@
 -- Verilog/SystemVerilog plugin
--- Custom fork with moduleports indent feature
+-- Replaced by ~/.config/nvim/indent/systemverilog.vim
+-- The jerias plugin only activates for 'verilog_systemverilog' filetype,
+-- so it is inert. Kept disabled.
 
 return {
     "jerias/verilog_systemverilog.vim",
-    lazy = false,
-    config = function()
-        -- Disable indent for:
-        --   eos = end-of-statement (prevents extra indent on );)
-        --   moduleports = module port/parameter lists (prevents indent on standalone ()
-        vim.g.verilog_disable_indent_lst = "eos,standalone,moduleports"
-    end,
+    enabled = false,
 }

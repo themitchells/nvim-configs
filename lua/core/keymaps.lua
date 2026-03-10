@@ -12,9 +12,11 @@
 local sections = {
 
     { name = "Search", maps = {
-        { "n", "<Space>",       "/",           "Search forward" },
-        { "n", "<C-Space>",     "?",           "Search backward" },
-        { "n", "<leader><CR>",  ":noh<CR>",    "Clear search highlight",   { silent = true } },
+        { "n", "<Space>",       "/",                    "Search forward" },
+        { "n", "<C-Space>",     "?",                    "Search backward" },
+        { "n", "<leader><CR>",  ":noh<CR>",             "Clear search highlight",   { silent = true } },
+        { "n", "*",             "/<C-r><C-w><CR>",      "Search word under cursor (no word boundaries)" },
+        { "n", "#",             "?<C-r><C-w><CR>",      "Search word under cursor backward (no word boundaries)" },
     }},
 
     { name = "File Navigation", maps = {

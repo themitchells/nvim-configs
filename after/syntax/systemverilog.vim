@@ -58,7 +58,12 @@ let s:inst_excl =
 " s:inst_excl exclusion prevents control-flow keywords (if/for/while/case/etc.)
 " from being highlighted as method names.
 syn keyword verilogMethod      new
-execute 'syn match verilogMethod "\(\(\s\|[(/]\|^\)\.\)\@2<!\(' . s:inst_excl . '\)\@!\<\w\+\ze#\?("'
+execute 'syn match verilogMethod "\(\(\s\|[(/]\|^\)\.\)\@2<!\(' . s:inst_excl . '\)\@!\<\w\+\ze\s*#\?("'
+" Declaration name: identifier immediately after module/interface/program/package/class.
+" Covers the case where ( is on the next line (no ( to trigger the pattern above).
+syn match verilogMethod "\(\(module\|interface\|program\|package\|class\)\s\+\)\@<=\<[a-zA-Z_]\w*\>"
+" End-label name: identifier after endmodule:/endinterface:/endclass: etc.
+syn match verilogMethod "\(\<end\w*\>\s*:\s*\)\@<=\<[a-zA-Z_]\w*\>"
 
 " ---- Object / scope resolution / member access ------------------------------
 " Highlights the identifier before :: (package scope) or . (member/modport).
@@ -82,7 +87,7 @@ syn match   verilogLabel       "\(\<\(begin\|end\)\>\s*:\s*\)\@20<=\<\k\+\>"
 "        zmb_rev0_v2_iobufs
 "        u_zmb_rev0_v2_iobufs
 "        (
-"   Negative lookahead uses s:inst_excl (defined above) to exclude SV keywords.
+"   verilogInstance is suppressed inside { } via verilogBraceGroup (below).
 execute 'syn match verilogInstance "^\s*\(' . s:inst_excl . '\)\@!\<[a-zA-Z_]\w*\>\s*$"'
 
 "   2. Name followed by ( or #( on the same line:
@@ -98,6 +103,14 @@ execute 'syn match verilogInstance "^\s*\(' . s:inst_excl . '\)\@!\<[a-zA-Z_]\w*
 syn region  verilogAttribute   start="(\*" end="\*)" oneline
                                \ nextgroup=verilogInstPost skipwhite
 syn match   verilogInstPost    "\<[a-zA-Z_]\w*\>\s*$" contained
+
+" ---- Brace group (concatenation / aggregate literals) ----------------------
+" Module instantiations never appear inside { }, so suppressing verilogInstance
+" inside braces correctly prevents concat items from being misidentified.
+" transparent: the region itself adds no highlight; contents highlight normally.
+" Nested { } are handled automatically since verilogBraceGroup is in ALLBUT.
+syn region verilogBraceGroup start="{" end="}" transparent keepend
+                             \ contains=ALLBUT,verilogInstance,verilogInstPost
 
 " ---- Declaration qualifiers -------------------------------------------------
 " input/output/inout/ref and parameter/localparam/genvar tell you *what kind*

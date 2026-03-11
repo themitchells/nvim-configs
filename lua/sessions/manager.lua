@@ -71,8 +71,16 @@ function M.save_session()
     local session_dir = vim.fn.fnamemodify(M.session_name, ":h")
     vim.fn.mkdir(session_dir, "p")
 
+    -- Close the buffergator sidebar before saving: it's a scratch buffer that
+    -- can't be restored, leaving a stray [No Name] window on session load.
+    local bg_ok, bg_view = pcall(require, "nvim-buffergator.view")
+    local bg_was_open = bg_ok and bg_view.is_open()
+    if bg_was_open then bg_view.close() end
+
     vim.cmd("mksession! " .. M.session_name)
     print("Saved session: " .. M.session_name)
+
+    if bg_was_open then bg_view.open() end
 end
 
 -- Get session name from user

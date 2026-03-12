@@ -80,16 +80,14 @@ local function do_rename(old_path, new_path)
     -- Rename buffer in-place: same bufnr, undo history intact, no ghost buffer
     vim.api.nvim_buf_set_name(bufnr, new_path)
 
-    if not old_exists then
-        -- New buffer not yet on disk: write to the new path now
-        local ok, err = pcall(vim.cmd, "write")
-        if not ok then
-            vim.notify("Rename: could not write to new path: " .. tostring(err), vim.log.levels.ERROR)
-            return
-        end
+    -- Sync buffer write-state with the new path. write! is needed in both cases:
+    -- for existing files, nvim_buf_set_name resets write-tracking so Neovim would
+    -- otherwise report "file exists" on the next :w; for new buffers it creates the file.
+    local ok, err = pcall(vim.cmd, "silent write!")
+    if not ok then
+        vim.notify("Rename: could not write to new path: " .. tostring(err), vim.log.levels.ERROR)
+        return
     end
-
-    vim.bo[bufnr].modified = false
 
     -- Re-detect filetype if the extension changed
     if vim.fn.fnamemodify(old_path, ":e") ~= vim.fn.fnamemodify(new_path, ":e") then

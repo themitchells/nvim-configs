@@ -5,6 +5,7 @@
 -- Sets how many lines of history VIM has to remember
 vim.opt.history = 500
 
+
 -- Enable filetype plugins
 vim.cmd('filetype plugin on')
 vim.cmd('filetype indent on')
@@ -103,14 +104,14 @@ vim.opt.undolevels = 1000
 vim.opt.undoreload = 10000
 
 -- Use spaces instead of tabs
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.softtabstop = 4
 vim.opt.expandtab = true
 
 -- Be smart when using tabs
 vim.opt.smarttab = true
 
--- 1 tab == 4 spaces
-vim.opt.shiftwidth = 4
-vim.opt.tabstop = 4
 
 -- Linebreak on 500 characters
 vim.opt.linebreak = true
@@ -227,7 +228,7 @@ vim.opt.splitright = true
 vim.opt.equalalways = false  -- Don't equalize window sizes when splits open/close
 
 -- Update time (for better experience)
-vim.opt.updatetime = 300
+vim.opt.updatetime = 750
 
 -- Don't pass messages to |ins-completion-menu|
 vim.opt.shortmess:append('c')

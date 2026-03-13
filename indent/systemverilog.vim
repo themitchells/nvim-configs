@@ -9,8 +9,9 @@
 "     declaration port/parameter list closes.
 "   - Module/function/task body indent after ); works for multi-section
 "     headers (module name + import + #() params + () ports on separate lines).
-"   - `ifdef/`ifndef/`else/`elsif/`endif inside ( ) blocks are suppressed so
-"     they do not shift indentation inside port/parameter lists.
+"   - `ifdef/`ifndef/`else/`elsif/`endif indent their contents even inside
+"     ( ) blocks (port/parameter lists), so ports inside `ifdef are indented
+"     one level relative to the `ifdef line.
 "   - Open-statement continuation aligns to the RHS column of assignments
 "     (e.g. assign foo = bar &  →  bar is the alignment column).
 "   - Close-statement resets indentation by scanning back to the base line,
@@ -430,9 +431,8 @@ function GetSystemVerilogIndent()
     let s:open_statement = 1
     if vverb | echom vverb_str "Indent after an open statement (col " . ind . ")." | endif
 
-  " ---- `ifdef/`ifndef/`elsif/`else — suppress inside ( ) -----------------
+  " ---- `ifdef/`ifndef/`elsif/`else — always indent, including inside ( ) --
   elseif last_line =~ '^\s*`\<\(ifn\?def\|elsif\|else\)\>' && indent_ifdef
-      \ && !s:InParens(v:lnum)
     let ind = ind + offset
     if vverb | echom vverb_str "Indent after `ifdef/`ifndef/`elsif/`else." | endif
 
@@ -524,9 +524,8 @@ function GetSystemVerilogIndent()
     let ind = ind - offset
     if vverb | echom vverb_str "De-indent case label after end." | endif
 
-  " ---- `elsif/`else/`endif — suppress inside ( ) -------------------------
+  " ---- `elsif/`else/`endif — always de-indent, including inside ( ) ------
   elseif curr_line =~ '^\s*`\<\(elsif\|else\|endif\)\>' && indent_ifdef
-      \ && !s:InParens(v:lnum)
     let ind = ind - offset
     let s:open_statement = 0
     if vverb | echom vverb_str "De-indent `elsif/`else/`endif." | endif

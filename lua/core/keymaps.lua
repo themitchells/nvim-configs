@@ -118,10 +118,11 @@ local sections = {
         { "n", "<F7>",         ":!chmod a+x %<CR>",                      "Make file executable" },
         { "n", "<C-p>",        '"_cw<C-r>0<Esc>',                        "Paste over word",           { silent = true } },
         { "v", "<C-p>",        '"_c<C-r>0<Esc>',                         "Paste over selection",      { silent = true } },
-        { "n", "<C-q>",        "q",                                       "Start/stop macro recording" },
+        { "n", "<C-q>",        "@q",                                      "Run macro @q" },
         { "n", "<Leader>m",    "mmHmt:%s/<C-V><CR>//ge<CR>'tzt'm",        "Remove Windows ^M" },
         { "n", "<leader>p",    '"+p',                                     "Paste from system clipboard" },
         { "v", "<leader>y",    '"+y',                                     "Copy to system clipboard" },
+        { "x", "p",            "<cmd>call setreg(v:register, getreg(v:register), 'v')<cr>p", "Paste as characterwise (no leading newline)", { silent = true } },
         { "v", "<leader>si",   ':lua require("utils.helpers").incr()<CR>',"Auto increment numbers" },
         { "n", "<leader>rr",   function()
             for name, _ in pairs(package.loaded) do

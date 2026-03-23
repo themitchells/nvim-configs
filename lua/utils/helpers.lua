@@ -82,12 +82,15 @@ function M.set_window_name()
     -- Extract view name from ClearCase-style path
     local viewname = vim.fn.substitute(filepath, ".*/\\([^/]*\\)/vobs/.*", "\\1", "")
 
+    local sn = vim.fn.fnamemodify(vim.v.servername, ":t:r")
+    local is_named = vim.v.servername:match("%.sock$") ~= nil
+    local prefix = is_named and ("nvim:" .. sn) or "nvim"
     if viewname == filepath then
         -- Not a ClearCase path
-        vim.o.titlestring = modified .. vim.v.servername .. " - " .. filepath
+        vim.o.titlestring = modified .. prefix .. " - " .. filepath
     else
         -- ClearCase path
-        vim.o.titlestring = modified .. vim.v.servername .. " - <" .. viewname .. "> - " .. filepath
+        vim.o.titlestring = modified .. prefix .. " - <" .. viewname .. "> - " .. filepath
     end
 end
 

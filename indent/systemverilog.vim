@@ -385,6 +385,50 @@ function GetSystemVerilogIndent()
       endif
     endwhile
 
+  " ---- endcase as last line — one-line block de-indent --------------------
+  " When always_comb/etc. has no begin and its single body statement is a
+  " case block, the line after endcase must de-indent back past the block
+  " keyword.  The normal one-line de-indent rule can't fire because it only
+  " looks at last_line2 (= last case item), not back to the case/always_comb.
+  elseif last_line =~ '^\s*\<endcase\>'
+    " Scan back to the matching case keyword (depth-counting for nesting).
+    let l:ec_ln  = lnum
+    let l:ec_dep = 0
+    while l:ec_ln > 1
+      let l:ec_ln -= 1
+      let l:ec_gl  = getline(l:ec_ln)
+      if   l:ec_gl =~ '^\s*\<endcase\>'
+        let l:ec_dep += 1
+      elseif l:ec_gl =~ '^\s*\<\(case\|casez\|casex\|randcase\)\>'
+        if l:ec_dep == 0 | break | endif
+        let l:ec_dep -= 1
+      endif
+    endwhile
+    " Check if the line before 'case' is an unended one-line block keyword,
+    " and unwind as many levels as needed (mirrors the existing unwind loop).
+    let l:chk_lnum = prevnonblank(l:ec_ln - 1)
+    let l:chk_line = getline(l:chk_lnum)
+    while l:chk_lnum > 0
+      if ( l:chk_line !~ '\<begin\>' ||
+        \ l:chk_line =~ '\(//\|/\*\).*\<begin\>' ) &&
+        \ l:chk_line =~ '\<\(`\@<!if\|`\@<!else\|for\|always\(_comb\|_ff\|_latch\)\?\|initial\|do\|foreach\|forever\|final\)\>.*' .
+          \ sv_comment . '*$' &&
+        \ l:chk_line !~ '\(//\|/\*\).*\<\(`\@<!if\|`\@<!else\|for\|always\(_comb\|_ff\|_latch\)\?\|initial\|do\|foreach\|forever\|final\)\>' &&
+        \ l:chk_line !~ sv_openstat . '\s*' . sv_comment . '*$' &&
+        \ l:chk_line !~ '\(;\|\<end\>\|\*/\)\s*' . sv_comment . '*$' &&
+        \ ( l:chk_line !~ '\<begin\>' ||
+        \   l:chk_line =~ '\(//\|/\*\).*\<begin\>' )
+        let ind = ind - offset
+        let l:prv_lnum = prevnonblank(l:chk_lnum - 1)
+        if l:prv_lnum == 0 | break | endif
+        let l:chk_lnum = l:prv_lnum
+        let l:chk_line = getline(l:prv_lnum)
+      else
+        break
+      endif
+    endwhile
+    if vverb | echom vverb_str "De-indent after endcase in one-line block (col " . ind . ")" | endif
+
   " ---- close statement — last continuation line ends with ; ---------------
   " Scan back past all continuation lines to restore the pre-continuation
   " indent (handles both +offset and assignment-aligned continuations).
@@ -423,6 +467,11 @@ function GetSystemVerilogIndent()
    \ !s:InParens(v:lnum)
     let l:asgn_pat = '\([^=!]=\([^=]\|$\)\|<=\)'
     let l:lhs = substitute(last_line, l:asgn_pat . '\s*\zs.*', '', '')
+    " If the RHS starts with { followed by content, align to the content
+    " after { (not to { itself), e.g. wire foo = {  bar → align to bar.
+    if last_line =~ l:asgn_pat . '\s*{\s*\S'
+      let l:lhs = substitute(last_line, l:asgn_pat . '\s*{\s*\zs.*', '', '')
+    endif
     if len(l:lhs) < len(last_line) && len(l:lhs) > ind
       let ind = len(l:lhs)
     else
@@ -442,14 +491,12 @@ function GetSystemVerilogIndent()
   " curr_line adjustments — re-indent the current line
   " =========================================================================
 
-  " ---- end*/join*/} — de-indent -------------------------------------------
-  " } closes enum/struct/union/concatenation blocks opened by a trailing {.
+  " ---- end*/join* — de-indent ---------------------------------------------
   if curr_line =~ '^\s*\<\(join\|join_any\|join_none\|end\)\>' ||
       \ curr_line =~ '^\s*\<\(endfunction\|endtask\|endspecify\|endclass\)\>' ||
       \ curr_line =~ '^\s*\<\(endpackage\|endsequence\|endclocking\|endinterface\)\>' ||
       \ curr_line =~ '^\s*\<endgenerate\>' ||
-      \ curr_line =~ '^\s*\<\(endgroup\|endproperty\|endchecker\|endprogram\)\>' ||
-      \ curr_line =~ '^\s*}'
+      \ curr_line =~ '^\s*\<\(endgroup\|endproperty\|endchecker\|endprogram\)\>'
     let ind = ind - offset
     if vverb | echom vverb_str "De-indent the end of a block." | endif
     if s:open_statement == 1
@@ -457,6 +504,35 @@ function GetSystemVerilogIndent()
       let s:open_statement = 0
       if vverb | echom vverb_str "De-indent the close statement." | endif
     endif
+
+  " ---- } — scan back to matching { ----------------------------------------
+  " Handles concatenation, struct/enum/union closes.  Scans char-by-char
+  " with depth counting (like s:FindMatchOpen) so nested {} work correctly.
+  elseif curr_line =~ '^\s*}'
+    let l:need  = 0
+    let l:ln    = v:lnum
+    let l:found = 0
+    while l:ln > 1 && !l:found
+      let l:ln -= 1
+      let l:gl  = substitute(getline(l:ln), '//.*$',      '', '')
+      let l:gl  = substitute(l:gl,          '/\*.\{-}\*/', '', 'g')
+      let l:i   = len(l:gl) - 1
+      while l:i >= 0
+        if     l:gl[l:i] ==# '}' | let l:need += 1
+        elseif l:gl[l:i] ==# '{'
+          if l:need == 0
+            let ind     = indent(l:ln)
+            let l:found = 1
+            break
+          endif
+          let l:need -= 1
+        endif
+        let l:i -= 1
+      endwhile
+    endwhile
+    if !l:found | let ind = ind - offset | endif
+    let s:open_statement = 0
+    if vverb | echom vverb_str "De-indent } to matching { line (col " . ind . ")" | endif
 
   " ---- endcase — scan back to matching case keyword -----------------------
   " Uses depth counting to handle nested case statements.
@@ -503,26 +579,22 @@ function GetSystemVerilogIndent()
       \ ( last_line =~
       \ '\<\(`\@<!if\|`\@<!else\|for\|case\%[[zx]]\|always\(_comb\|_ff\|_latch\)\?\|initial\|do\|foreach\|forever\|randcase\|final\)\>' ||
       \ last_line =~ ')\s*' . sv_comment . '*$' ||
+      \ last_line =~ '^\s*\w[^=?;()\[\]{]*:\s*' . sv_comment . '*$' ||
       \ ( last_line =~ sv_openstat . '\s*' . sv_comment . '*$' &&
       \   last_line !~ '^\s*\w[^;()\[\]{]*:\s*' . sv_comment . '*$' ) )
       let ind = ind - offset
       if vverb | echom vverb_str "De-indent a stand alone begin statement." | endif
-      if s:open_statement == 1
+      " Case item label: open-statement fired on ':', but it's not a real
+      " continuation — clear the flag without the extra de-indent.
+      if s:open_statement == 1 &&
+        \ last_line =~ '^\s*\w[^=?;()\[\]{]*:\s*' . sv_comment . '*$'
+        let s:open_statement = 0
+      elseif s:open_statement == 1
         let ind = ind - offset
         let s:open_statement = 0
         if vverb | echom vverb_str "De-indent the close statement." | endif
       endif
     endif
-
-  " ---- case item label after end — restore to case-item level -------------
-  " When 'end' closes a case arm body, the next case label should be one
-  " level below 'case', not at the body level.  Detect by: last non-blank
-  " line is a standalone 'end' and curr_line looks like a case item label
-  " (identifier/expr followed by ':' with nothing else on the line).
-  elseif last_line =~ '^\s*\<end\>\s*' . sv_comment . '*$' &&
-      \ curr_line =~ '^\s*\w[^;()\[\]{]*:\s*' . sv_comment . '*$'
-    let ind = ind - offset
-    if vverb | echom vverb_str "De-indent case label after end." | endif
 
   " ---- `elsif/`else/`endif — always de-indent, including inside ( ) ------
   elseif curr_line =~ '^\s*`\<\(elsif\|else\|endif\)\>' && indent_ifdef

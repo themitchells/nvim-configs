@@ -100,13 +100,10 @@ local sections = {
             if ok then fmt.format_to_instance_line()
             else vim.notify("Failed to load verilog.format", vim.log.levels.ERROR) end
         end, "Format Verilog line" },
-        { "n", "<leader>vg", function()
-            if vim.fn.exists(':VerilogGotoInstanceStart') == 2 then
-                vim.cmd('VerilogGotoInstanceStart')
-            else
-                vim.notify("Verilog plugin not loaded", vim.log.levels.WARN)
-            end
-        end, "Goto Verilog instance start", { silent = true } },
+        { "n", "<leader>vg", function() require('verilog.format').goto_instance_start() end,
+            "Goto Verilog instance start", { silent = true } },
+        { "n", "<leader>u",  function() require('verilog.format').goto_instance_start() end,
+            "Goto Verilog instance start", { silent = true } },
     }},
 
     { name = "Navigation", maps = {

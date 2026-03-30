@@ -427,4 +427,106 @@ function M.format_to_instance()
     vim.fn.winrestview(winview)
 end
 
+-- ── Goto Instance Start ───────────────────────────────────────────────────────
+-- Scans backward from the cursor, skipping balanced (...) and [...] pairs,
+-- to find the module-type line of the enclosing Verilog instance.
+-- Ported from verilog_systemverilog.vim s:GetInstanceInfo / GotoInstanceStart.
+--
+-- Uses a flat single-pass approach: p/b depth tracked inline on every char so
+-- multi-line balanced blocks are handled correctly without nested inner loops.
+function M.goto_instance_start()
+    local start_line = vim.fn.line('.')
+    local linenr     = start_line
+
+    -- Detect whether the cursor is on a closing line (first non-ws char is ')').
+    -- Only on such lines do we trigger the instance-opener logic when p drops to 0.
+    local start_line_text = vim.fn.getline(start_line)
+    local at_close_paren  = start_line_text:match('^%s*%)') ~= nil
+
+    -- For the start line, strip trailing ';' and whitespace from col_end so
+    -- a ); line doesn't immediately hit give_up.
+    local function start_col_end()
+        local c = #start_line_text
+        while c > 0 do
+            local ch = start_line_text:sub(c, c)
+            if ch == ';' or ch:match('%s') then c = c - 1 else break end
+        end
+        return c - 1  -- 0-indexed
+    end
+
+    local p          = 0
+    local b          = 0
+    local ininstdecl = 0
+    local ininsttype = 0
+    local found_line = nil
+
+    while linenr > 0 do
+        local line    = vim.fn.getline(linenr)
+        local col_end = (linenr == start_line) and start_col_end() or (#line - 1)
+
+        for col = col_end, 0, -1 do
+            local ch = line:sub(col + 1, col + 1)
+
+            -- ── Inside a balanced skip block ──────────────────────────────────
+            if p > 0 then
+                if ch == ')' then
+                    p = p + 1
+                elseif ch == '(' then
+                    p = p - 1
+                    -- When p reaches 0 we exited a balanced block.  Only treat
+                    -- this '(' as an instance opener when the cursor started on
+                    -- a closing-paren line (at_close_paren) and nothing has been
+                    -- parsed yet — that's the port-list or #( opener.
+                    if p == 0 and at_close_paren
+                       and ininstdecl == 0 and ininsttype == 0 then
+                        local prev = (col > 0) and line:sub(col, col) or ''
+                        if prev == '#' then ininsttype = -1
+                        else              ininstdecl = -1
+                        end
+                    end
+                end
+            elseif b > 0 then
+                if     ch == ']' then b = b + 1
+                elseif ch == '[' then b = b - 1
+                end
+
+            -- ── Normal scanning ───────────────────────────────────────────────
+            elseif ch == ';' then
+                goto give_up
+            elseif ch == ')' then
+                p = p + 1
+            elseif ch == ']' then
+                b = b + 1
+            elseif ch == '(' then
+                local prev = (col > 0) and line:sub(col, col) or ''
+                if prev == '#' then ininsttype = -1
+                else              ininstdecl = -1
+                end
+            elseif ininstdecl == -1 and ch:match('%w') then
+                ininstdecl = col
+            elseif ininstdecl > 0 and ininsttype == 0
+                   and (ch:match('%s') or col == 0) then
+                ininsttype = -1
+            elseif ininsttype == -1 and ch:match('%w') then
+                ininsttype = col
+            elseif ininsttype > 0 and (ch:match('%s') or col == 0) then
+                found_line = linenr
+                goto done
+            end
+        end
+
+        linenr = linenr - 1
+    end
+
+    ::give_up::
+    ::done::
+
+    if found_line then
+        vim.cmd("normal! m'")   -- record current position so '' jumps back
+        vim.fn.cursor(found_line, 1)
+    else
+        vim.notify('Not inside a Verilog instance', vim.log.levels.WARN)
+    end
+end
+
 return M

@@ -81,9 +81,33 @@ for pattern, ft in pairs(custom_ft_map) do
     })
 end
 
+-- Detect filetype from shebang line.  Returns a filetype string or nil.
+local function ft_from_shebang(bufnr)
+    local line = vim.api.nvim_buf_get_lines(bufnr, 0, 1, false)[1] or ''
+    if not line:match('^#!') then return nil end
+    local interp = line:match('^#!/usr/bin/env%s+(%S+)')
+                or line:match('^#!.*/(%S+)%s*$')
+    if not interp then return nil end
+    interp = interp:match('^(%a+)')  -- strip version suffix (python3 → python)
+    local map = {
+        bash=  'bash',   sh=    'sh',   zsh=  'zsh',
+        python='python', perl=  'perl', ruby= 'ruby',
+        lua=   'lua',    node=  'javascript',
+        tclsh= 'tcl',    wish=  'tcl',
+    }
+    return map[interp]
+end
+
 -- Verilog/SystemVerilog filetype detection
 -- All extensions map to 'systemverilog'
 vim.filetype.add({
+    -- jbuild is normally detected as 'dune' by filename, but if it has a
+    -- shebang it's a plain script — check shebang first.
+    filename = {
+        jbuild = function(_, bufnr)
+            return ft_from_shebang(bufnr) or 'dune'
+        end,
+    },
     extension = {
         v   = 'systemverilog',
         vh  = 'systemverilog',

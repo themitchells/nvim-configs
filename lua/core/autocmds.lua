@@ -1,6 +1,45 @@
 -- Autocommands
 -- Migrated from ~/.vim/vimrcs/extended.vim
 
+-- Normalise buffer names to absolute paths so relative '../' components
+-- (e.g. from gf on a relative path) never appear in the buffer name.
+local function normalize_buf_name(bufnr)
+    -- bufname() returns b_fname (name as given, may contain ..)
+    -- nvim_buf_get_name() returns b_ffname (already resolved) — don't use that
+    local name = vim.fn.bufname(bufnr)
+    if name == '' or not name:find('%.%.') then return end
+    local abs = vim.fn.simplify(vim.fn.fnamemodify(name, ':p'))
+    if abs ~= name then
+        pcall(vim.api.nvim_buf_set_name, bufnr, abs)
+    end
+end
+
+vim.api.nvim_create_autocmd('BufReadPost', {
+    group = vim.api.nvim_create_augroup('AbsoluteBufName', { clear = true }),
+    callback = function(ev) normalize_buf_name(ev.buf) end,
+})
+
+vim.api.nvim_create_user_command('NormalizeBufNames', function()
+    local count = 0
+    for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_loaded(bufnr) then
+            local name = vim.fn.bufname(bufnr)
+            if name ~= '' and name:find('%.%.') then
+                local abs = vim.fn.simplify(vim.fn.fnamemodify(name, ':p'))
+                if abs ~= name then
+                    local ok, err = pcall(vim.api.nvim_buf_set_name, bufnr, abs)
+                    if ok then
+                        count = count + 1
+                    else
+                        vim.notify('Failed buf ' .. bufnr .. ': ' .. tostring(err), vim.log.levels.WARN)
+                    end
+                end
+            end
+        end
+    end
+    vim.notify('Normalized ' .. count .. ' buffer(s)', vim.log.levels.INFO)
+end, { desc = 'Normalise all buffer names to absolute paths' })
+
 -- File cleanup on save
 local cleanup_group = vim.api.nvim_create_augroup('FileCleanup', { clear = true })
 vim.api.nvim_create_autocmd('BufWrite', {

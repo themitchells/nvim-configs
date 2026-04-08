@@ -1,6 +1,13 @@
 -- Autocommands
 -- Migrated from ~/.vim/vimrcs/extended.vim
 
+-- Force lualine to re-evaluate modified state when switching buffers.
+-- Without this, the filename highlight color lags until the next keypress.
+vim.api.nvim_create_autocmd('BufEnter', {
+    group = vim.api.nvim_create_augroup('LualineModifiedRefresh', { clear = true }),
+    callback = function() vim.cmd('redrawstatus') end,
+})
+
 -- Normalise buffer names to absolute paths so relative '../' components
 -- (e.g. from gf on a relative path) never appear in the buffer name.
 local function normalize_buf_name(bufnr)

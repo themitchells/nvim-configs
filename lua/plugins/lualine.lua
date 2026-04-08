@@ -23,12 +23,23 @@ return {
                         modified = '~',
                         removed = '-'
                     },
-                    colored = true,  -- Use colors for diff
+                    colored = true,
                     diff_color = {
                         added    = 'LualineDiffAdd',
                         modified = 'LualineDiffChange',
                         removed  = 'LualineDiffDelete',
                     },
+                    -- Use buffer-local gitsigns data so switching buffers never
+                    -- shows the previous buffer's diff stats while gitsigns refreshes.
+                    source = function()
+                        local gs = vim.b.gitsigns_status_dict
+                        if not gs then return nil end
+                        return {
+                            added    = gs.added,
+                            modified = gs.changed,
+                            removed  = gs.removed,
+                        }
+                    end,
                 },
                 {
                     'diagnostics',

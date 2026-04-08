@@ -491,8 +491,33 @@ function GetSystemVerilogIndent()
   " curr_line adjustments — re-indent the current line
   " =========================================================================
 
-  " ---- end*/join* — de-indent ---------------------------------------------
-  if curr_line =~ '^\s*\<\(join\|join_any\|join_none\|end\)\>' ||
+  " ---- end — scan back to matching begin ------------------------------------
+  " Uses depth counting so nested begin/end pairs are handled correctly,
+  " matching the same approach used for } and endcase.
+  if curr_line =~ '^\s*\<end\>'
+    let l:need  = 1
+    let l:ln    = v:lnum
+    let l:found = 0
+    while l:ln > 1 && !l:found
+      let l:ln -= 1
+      let l:gl  = substitute(getline(l:ln), '//.*$',      '', '')
+      let l:gl  = substitute(l:gl,          '/\*.\{-}\*/', '', 'g')
+      if l:gl =~ '\<end\>'
+        let l:need += 1
+      elseif l:gl =~ '\<begin\>'
+        let l:need -= 1
+        if l:need == 0
+          let ind     = indent(l:ln)
+          let l:found = 1
+        endif
+      endif
+    endwhile
+    if !l:found | let ind = ind - offset | endif
+    let s:open_statement = 0
+    if vverb | echom vverb_str "De-indent end to matching begin (col " . ind . ")" | endif
+
+  " ---- join*/end* — de-indent ----------------------------------------------
+  elseif curr_line =~ '^\s*\<\(join\|join_any\|join_none\)\>' ||
       \ curr_line =~ '^\s*\<\(endfunction\|endtask\|endspecify\|endclass\)\>' ||
       \ curr_line =~ '^\s*\<\(endpackage\|endsequence\|endclocking\|endinterface\)\>' ||
       \ curr_line =~ '^\s*\<endgenerate\>' ||

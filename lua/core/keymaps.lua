@@ -70,8 +70,8 @@ local sections = {
     { name = "Git", maps = {
         { "n", "<F5>",         ':lua require("utils.helpers").git_diff()<CR>',               "Git diff current file" },
         { "n", "<F6>",         function() require('gitsigns').toggle_word_diff() end,        "Toggle word diff" },
-        { "n", "]c",           function() require('gitsigns').next_hunk() end,               "Next git hunk" },
-        { "n", "[c",           function() require('gitsigns').prev_hunk() end,               "Previous git hunk" },
+        { "n", "]c",           function() require('gitsigns').next_hunk({ target = 'all' }) end, "Next git hunk" },
+        { "n", "[c",           function() require('gitsigns').prev_hunk({ target = 'all' }) end, "Previous git hunk" },
         { "n", "<leader>hs",   function() require('gitsigns').stage_hunk() end,              "Stage hunk" },
         { "n", "<leader>hu",   function() require('gitsigns').undo_stage_hunk() end,         "Undo stage hunk" },
         { "n", "<leader>hr",   function() require('gitsigns').reset_hunk() end,              "Reset hunk" },

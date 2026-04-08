@@ -42,6 +42,29 @@ return {
                     end,
                 },
                 {
+                    -- Staged changes indicator — shown when there are staged hunks.
+                    -- Reads gitsigns' internal hunks_staged cache (populated from git diff --cached).
+                    function()
+                        local ok, cache = pcall(require, 'gitsigns.cache')
+                        if not ok then return '' end
+                        local bcache = cache.cache[vim.api.nvim_get_current_buf()]
+                        if not bcache or not bcache.hunks_staged or #bcache.hunks_staged == 0 then
+                            return ''
+                        end
+                        local added, removed = 0, 0
+                        for _, h in ipairs(bcache.hunks_staged) do
+                            added   = added   + (h.added   and h.added.count   or 0)
+                            removed = removed + (h.removed and h.removed.count or 0)
+                        end
+                        local parts = {}
+                        if added   > 0 then parts[#parts+1] = '+' .. added   end
+                        if removed > 0 then parts[#parts+1] = '-' .. removed end
+                        return '[S:' .. table.concat(parts, ' ') .. ']'
+                    end,
+                    color = 'DiagnosticInfo',
+                    padding = { left = 1, right = 0 },
+                },
+                {
                     'diagnostics',
                     sources = { 'nvim_lsp' },
                     symbols = {

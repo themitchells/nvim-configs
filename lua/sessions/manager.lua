@@ -6,9 +6,11 @@ local M = {}
 M.session_loaded = false
 M.session_name = ""
 
--- Helper to get session directory using XDG state path
+-- Helper to get session directory
+-- Sessions live on network home (not local disk) so they survive machine changes/crashes.
+-- Other nvim state (swap, backup, undo) stays on local disk via the stdpath("state") symlink.
 local function get_session_dir()
-    local session_dir = vim.fn.stdpath("state") .. "/sessions"
+    local session_dir = vim.fn.expand("~") .. "/.local/state/nvim-sessions"
     vim.fn.mkdir(session_dir, "p")
     return session_dir
 end
@@ -46,7 +48,12 @@ function M.load_session()
     end
 
     if vim.fn.filereadable(M.session_name) == 1 then
+        -- Suppress E325 swap-file ATTENTION prompts during session restore;
+        -- they can't be answered inside nvim_exec2 and cause an error.
+        local saved_shortmess = vim.o.shortmess
+        vim.opt.shortmess:append("A")
         vim.cmd("source " .. M.session_name)
+        vim.o.shortmess = saved_shortmess
         M.session_loaded = true
         print("Loaded session: " .. M.session_name)
     else

@@ -87,6 +87,17 @@ vim.opt.backup = true
 vim.opt.writebackup = true
 vim.opt.swapfile = true
 
+-- Ensure symlink targets exist for XDG directories
+-- When nvim directories are symlinked to local disk, the targets may not exist on all machines
+local uv = vim.uv or vim.loop
+for _, name in ipairs({ "state", "cache" }) do
+    local path = vim.fn.stdpath(name)
+    local target = uv.fs_readlink(path)
+    if target then
+        vim.fn.mkdir(target, "p")
+    end
+end
+
 -- Use XDG-compliant state directory for temporary files
 -- The // suffix preserves full file paths in the filename to avoid collisions
 vim.opt.directory = vim.fn.stdpath("state") .. "/swap//"

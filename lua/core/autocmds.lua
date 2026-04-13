@@ -20,7 +20,16 @@ local function normalize_buf_name(bufnr)
         -- Use :keepalt to preserve the alternate buffer (#); a plain
         -- buf_set_name internally deletes/recreates the buffer entry
         -- which clobbers it.
-        pcall(vim.cmd, 'keepalt file ' .. vim.fn.fnameescape(abs))
+        -- Follow with :filetype detect and a silent edit to clear the
+        -- "new file" flag, otherwise :w throws E13 "File exists".
+        local escaped = vim.fn.fnameescape(abs)
+        pcall(vim.cmd, 'keepalt file ' .. escaped)
+        pcall(vim.cmd, 'silent keepalt edit ' .. escaped)
+        -- Clean up the stale unlisted buffer left behind for the old name
+        local old_buf = vim.fn.bufnr(name)
+        if old_buf > 0 and old_buf ~= bufnr and not vim.api.nvim_buf_is_loaded(old_buf) then
+            pcall(vim.cmd, 'silent! bwipeout ' .. old_buf)
+        end
     end
 end
 

@@ -88,7 +88,7 @@ syn match   verilogLabel       "\(\<\(begin\|end\)\>\s*:\s*\)\@20<=\<\k\+\>"
 "        u_zmb_rev0_v2_iobufs
 "        (
 "   verilogInstance is suppressed inside { } via verilogBraceGroup (below).
-execute 'syn match verilogInstance "^\s*\(' . s:inst_excl . '\)\@!\<[a-zA-Z_]\w*\>\s*$"'
+execute 'syn match verilogInstance "^\s*\(' . s:inst_excl . '\)\@!\(\<[A-Z][A-Z0-9_$]*\>\)\@!\<[a-zA-Z_]\w*\>\s*$"'
 
 "   2. Name followed by ( or #( on the same line:
 "        if_lifs #(

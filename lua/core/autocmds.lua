@@ -17,7 +17,10 @@ local function normalize_buf_name(bufnr)
     if name == '' or not name:find('%.%.') then return end
     local abs = vim.fn.simplify(vim.fn.fnamemodify(name, ':p'))
     if abs ~= name then
-        pcall(vim.api.nvim_buf_set_name, bufnr, abs)
+        -- Use :keepalt to preserve the alternate buffer (#); a plain
+        -- buf_set_name internally deletes/recreates the buffer entry
+        -- which clobbers it.
+        pcall(vim.cmd, 'keepalt file ' .. vim.fn.fnameescape(abs))
     end
 end
 

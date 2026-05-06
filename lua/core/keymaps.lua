@@ -20,6 +20,31 @@ local sections = {
     }},
 
     { name = "File Navigation", maps = {
+        { "n", "<leader>gf",   function()
+            local orig_win = vim.api.nvim_get_current_win()
+            local orig_buf = vim.api.nvim_get_current_buf()
+            local orig_view = vim.fn.winsaveview()
+            local saved_lazy = vim.o.lazyredraw
+            vim.o.lazyredraw = true
+            local ok, err = pcall(function()
+                -- Let Vim's gf do full resolution (path, suffixesadd, includeexpr, ...)
+                vim.cmd('normal! gf')
+                local target_buf = vim.api.nvim_get_current_buf()
+                if target_buf == orig_buf then return end
+                -- Restore original buffer + view in source window
+                vim.api.nvim_win_set_buf(orig_win, orig_buf)
+                vim.api.nvim_win_call(orig_win, function() vim.fn.winrestview(orig_view) end)
+                -- Move to other split (or create one) and show the resolved buffer
+                if vim.fn.winnr('$') > 1 then
+                    vim.cmd('wincmd w')
+                else
+                    vim.cmd('vsplit')
+                end
+                vim.api.nvim_win_set_buf(0, target_buf)
+            end)
+            vim.o.lazyredraw = saved_lazy
+            if not ok then vim.notify(tostring(err), vim.log.levels.ERROR) end
+        end, "Open file under cursor in other split" },
         { "n", "<F4>",         "<cmd>NvimTreeToggle<CR>",   "Toggle file explorer" },
         { "n", "<leader>nn",   "<cmd>NvimTreeToggle<CR>",   "Toggle file explorer" },
         { "n", "<leader>nf",   "<cmd>NvimTreeFindFile<CR>", "Find current file in tree" },

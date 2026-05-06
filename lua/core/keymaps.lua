@@ -150,10 +150,12 @@ local sections = {
             { "n", "<leader>rs", function() require('utils.repeat_history').save()   end, "Save . register to repeat history" },
             { "n", "<leader>rp", function() require('utils.repeat_history').pick()   end, "Pick from repeat history" },
         }
-        -- <leader>1–9 (normal) and <M-1>–<M-9> (insert) replay history slots
+        -- <leader>1–9 (normal/visual) and <M-1>–<M-9> (insert) replay history slots
         for i = 1, 9 do
             maps[#maps+1] = { "n", "<leader>"..i, function() require('utils.repeat_history').replay(i) end,
                               "Repeat history slot "..i }
+            maps[#maps+1] = { "x", "<leader>"..i, function() require('utils.repeat_history').replay(i) end,
+                              "Repeat history slot "..i.." (visual mode)" }
             maps[#maps+1] = { "i", "<M-"..i..">",  function() require('utils.repeat_history').replay(i) end,
                               "Repeat history slot "..i.." (insert mode)" }
         end

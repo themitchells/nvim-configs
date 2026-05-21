@@ -60,6 +60,9 @@ local function do_rename(old_path, new_path)
     local new_undo   = vim.o.undofile and vim.fn.undofile(new_path) or nil
     local bufnr      = vim.api.nvim_get_current_buf()
     local old_exists = vim.fn.filereadable(old_path) == 1
+    -- Preserve the window's alternate buffer: nvim_buf_set_name creates a ghost
+    -- buffer holding the old name, which would otherwise become the new alternate.
+    local prev_alt   = vim.fn.bufnr('#')
 
     if old_exists then
         -- Flush unsaved changes before moving the file
@@ -79,6 +82,17 @@ local function do_rename(old_path, new_path)
 
     -- Rename buffer in-place: same bufnr, undo history intact, no ghost buffer
     vim.api.nvim_buf_set_name(bufnr, new_path)
+
+    -- nvim_buf_set_name leaves behind an unloaded buffer holding the old name,
+    -- which gets promoted to the alternate. Wipe it and restore the prior alt
+    -- so Ctrl-^ jumps to the real previous buffer, not the renamed-away name.
+    local ghost = vim.fn.bufnr('^' .. old_path .. '$')
+    if ghost ~= -1 and ghost ~= bufnr then
+        pcall(vim.api.nvim_buf_delete, ghost, { force = true })
+    end
+    if prev_alt ~= -1 and prev_alt ~= bufnr and vim.api.nvim_buf_is_valid(prev_alt) then
+        pcall(vim.cmd, 'let @# = ' .. prev_alt)
+    end
 
     -- Sync buffer write-state with the new path. write! is needed in both cases:
     -- for existing files, nvim_buf_set_name resets write-tracking so Neovim would

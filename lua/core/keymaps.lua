@@ -48,6 +48,14 @@ local sections = {
         { "n", "<F4>",         "<cmd>NvimTreeToggle<CR>",   "Toggle file explorer" },
         { "n", "<leader>nn",   "<cmd>NvimTreeToggle<CR>",   "Toggle file explorer" },
         { "n", "<leader>nf",   "<cmd>NvimTreeFindFile<CR>", "Find current file in tree" },
+        { "n", "<leader>nr",   function()
+            -- Toggle whether the tree re-roots at the active buffer's directory.
+            vim.g.nvimtree_follow_root = not (vim.g.nvimtree_follow_root ~= false)
+            require("nvim-tree").setup({
+                update_focused_file = { enable = true, update_root = vim.g.nvimtree_follow_root },
+            })
+            vim.notify("nvim-tree follow root: " .. tostring(vim.g.nvimtree_follow_root))
+        end, "Toggle nvim-tree follow active buffer root" },
         { "n", "<leader>nc",   "<cmd>NvimTreeCollapse<CR>", "Collapse tree" },
         { "n", "<F3>",         "<cmd>BuffergatorToggle<CR>","Toggle buffer sidebar" },
         { "n", "<leader>bb",   "<cmd>BuffergatorToggle<CR>","Toggle buffer sidebar" },

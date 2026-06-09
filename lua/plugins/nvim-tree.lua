@@ -7,7 +7,12 @@ return {
     opts = {
         -- Match NERDTree-like behavior
         view = {
-            width = 30,
+            -- Dynamic width: size to content, bounded by min/max.
+            width = {
+                min = 30,
+                max = 60,
+                padding = 1,
+            },
             side = "left",
         },
         renderer = {
@@ -37,6 +42,12 @@ return {
         git = {
             enable = true,
             ignore = false,
+        },
+        -- Follow the active buffer: highlight it in the tree and re-root the
+        -- tree at the buffer's directory instead of always sitting at the cwd.
+        update_focused_file = {
+            enable = true,
+            update_root = true,
         },
     },
 }

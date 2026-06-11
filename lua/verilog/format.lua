@@ -438,9 +438,32 @@ function M.goto_instance_start()
     local start_line = vim.fn.line('.')
     local linenr     = start_line
 
+    -- Strip comments so punctuation inside them (';', '(', ')', '[', ']') is
+    -- never parsed as code.  We scan upward one line at a time, so block
+    -- comments are tracked via in_block: when true, the text we are now reading
+    -- is the interior of a /* ... */ whose closing '*/' was on a line below
+    -- (already read), and stays comment until its '/*' opener is found.
+    local function strip_line(text, in_block)
+        if in_block then
+            local open = text:find('/%*')
+            if open then
+                return text:sub(1, open - 1), false  -- '/*' opener: code precedes it
+            end
+            return '', true                          -- whole line still in block
+        end
+        text = text:gsub('/%*.-%*/', '')             -- balanced same-line blocks
+        local close, i = nil, text:find('%*/')       -- unmatched '*/' opens below
+        while i do close = i; i = text:find('%*/', i + 1) end
+        local now_block = false
+        if close then text = text:sub(close + 2); now_block = true end
+        local lc = text:find('//', 1, true)          -- line comment to EOL
+        if lc then text = text:sub(1, lc - 1) end
+        return text, now_block
+    end
+
     -- Detect whether the cursor is on a closing line (first non-ws char is ')').
     -- Only on such lines do we trigger the instance-opener logic when p drops to 0.
-    local start_line_text = vim.fn.getline(start_line)
+    local start_line_text = strip_line(vim.fn.getline(start_line), false)
     local at_close_paren  = start_line_text:match('^%s*%)') ~= nil
 
     -- For the start line, strip trailing ';' and whitespace from col_end so
@@ -459,9 +482,11 @@ function M.goto_instance_start()
     local ininstdecl = 0
     local ininsttype = 0
     local found_line = nil
+    local in_block   = false
 
     while linenr > 0 do
-        local line    = vim.fn.getline(linenr)
+        local line
+        line, in_block = strip_line(vim.fn.getline(linenr), in_block)
         local col_end = (linenr == start_line) and start_col_end() or (#line - 1)
 
         for col = col_end, 0, -1 do

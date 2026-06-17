@@ -133,6 +133,11 @@ local sections = {
             if ok then fmt.format_to_instance_line()
             else vim.notify("Failed to load verilog.format", vim.log.levels.ERROR) end
         end, "Format Verilog line" },
+        { "x", "<F9>", function()
+            local ok, fmt = pcall(require, 'verilog.format')
+            if ok then fmt.format_visual_lines()
+            else vim.notify("Failed to load verilog.format", vim.log.levels.ERROR) end
+        end, "Format Verilog selected lines" },
         { "n", "<leader>vg", function() require('verilog.format').goto_instance_start() end,
             "Goto Verilog instance start", { silent = true } },
         { "n", "<leader>u",  function() require('verilog.format').goto_instance_start() end,

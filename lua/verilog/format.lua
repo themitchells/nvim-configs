@@ -409,6 +409,29 @@ function M.format_to_instance_line()
     end
 end
 
+-- Format every line in the current visual selection (calls
+-- format_to_instance_line once per selected line).  Tracks the change in the
+-- buffer's total line count so that lines inserted or deleted by the per-line
+-- formatter keep the selection bounds and the next-line cursor aligned.
+function M.format_visual_lines()
+    local l1 = vim.fn.line('v')   -- start of visual selection
+    local l2 = vim.fn.line('.')   -- cursor end of selection
+    if l1 > l2 then l1, l2 = l2, l1 end
+
+    -- Leave visual mode so it does not linger after the operation.
+    vim.cmd([[execute "normal! \<Esc>"]])
+
+    local ln = l1
+    while ln <= l2 do
+        local before = vim.fn.line('$')
+        vim.fn.cursor(ln, 1)
+        M.format_to_instance_line()
+        local delta = vim.fn.line('$') - before
+        l2 = l2 + delta                    -- keep last line aligned
+        ln = ln + 1 + math.max(delta, 0)   -- step over any inserted lines
+    end
+end
+
 -- Format entire instance (calls format_to_instance_line repeatedly)
 function M.format_to_instance()
     vim.g.verilog_moduleName = "dummy_inst"

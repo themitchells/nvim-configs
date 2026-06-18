@@ -214,4 +214,11 @@ for _, section in ipairs(sections) do
     end
 end
 
+-- Command-line abbreviation: '~~' expands to the migrated working-copy root,
+-- mirroring how '~' expands to $HOME. Command-line scope only (covers :e, :w,
+-- :sp, etc.; not gf/Telescope/insert). Not a keymap, so it lives outside the
+-- sections table above and the <leader>? help window.
+local wc_root = vim.env.u or ('/data/userdata/' .. (vim.env.USER or vim.env.LOGNAME or ''))
+vim.cmd('cnoreabbrev ~~ ' .. wc_root)
+
 return { sections = sections }

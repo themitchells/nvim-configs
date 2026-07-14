@@ -123,6 +123,63 @@ function! s:InParens(lnum)
 endfunction
 
 "------------------------------------------------------------------------------
+" s:ContentAfterOpenParen(lnum)
+"   Find the innermost ( that encloses the start of lnum.  If that ( has
+"   non-whitespace after it on its own line, return the 0-based column of the
+"   first such non-whitespace char (so a continuation aligns under the first
+"   argument).  Return -1 when the ( is at end-of-line (nothing after it — an
+"   opener that should use +offset instead) or when no enclosing ( exists.
+"   Comments are stripped before scanning, like s:FindMatchOpen.
+"------------------------------------------------------------------------------
+function! s:ContentAfterOpenParen(lnum)
+  let l:need = 0
+  let l:ln   = a:lnum
+  let l:stop = max([1, a:lnum - 2000])
+  while l:ln > l:stop
+    let l:ln -= 1
+    let l:line = substitute(getline(l:ln), '//.*$',      '', '')
+    let l:line = substitute(l:line,        '/\*.\{-}\*/', '', 'g')
+    let l:i = len(l:line) - 1
+    while l:i >= 0
+      if     l:line[l:i] ==# ')' | let l:need += 1
+      elseif l:line[l:i] ==# '('
+        if l:need == 0
+          let l:rest = strpart(l:line, l:i + 1)
+          if l:rest =~ '^\s*$' | return -1 | endif
+          return l:i + 1 + strlen(matchstr(l:rest, '^\s*'))
+        endif
+        let l:need -= 1
+      endif
+      let l:i -= 1
+    endwhile
+  endwhile
+  return -1
+endfunction
+
+"------------------------------------------------------------------------------
+" s:InCase(lnum)
+"   Return 1 if lnum sits directly inside a case/casez/casex/randcase block
+"   (i.e. at the case-item level).  Scans back with depth counting so nested
+"   case blocks are handled.  Limit 500 lines.
+"------------------------------------------------------------------------------
+function! s:InCase(lnum)
+  let l:ln    = a:lnum
+  let l:depth = 0
+  let l:stop  = max([1, a:lnum - 500])
+  while l:ln > l:stop
+    let l:ln -= 1
+    let l:gl  = getline(l:ln)
+    if l:gl =~ '^\s*\<endcase\>'
+      let l:depth += 1
+    elseif l:gl =~ '^\s*\<\(case\|casez\|casex\|randcase\)\>'
+      if l:depth == 0 | return 1 | endif
+      let l:depth -= 1
+    endif
+  endwhile
+  return 0
+endfunction
+
+"------------------------------------------------------------------------------
 " s:FindBodyKeyword(open_lnum)
 "   Given the line number of a standalone ( that opens a port/param list,
 "   scan backward through recognised header lines (s:hdr_skip: blank,
@@ -238,6 +295,19 @@ function GetSystemVerilogIndent()
     else
       if vverb | echom vverb_str "De-indent ) — no match found, fallback" | endif
       return ind - offset
+    endif
+  endif
+
+  " ---- continuation inside an open ( ) — align to first arg column ---------
+  " When the current line sits inside an unclosed ( ) whose ( has content
+  " after it on the same line (e.g. foo(arg1, / = maxTicks(a, ), align the
+  " continuation under that first argument.  A ( at end-of-line (module/inst
+  " port list opener) returns -1 here and falls through to the +offset rules.
+  if s:InParens(v:lnum)
+    let l:pcol = s:ContentAfterOpenParen(v:lnum)
+    if l:pcol >= 0
+      if vverb | echom vverb_str "Align to open-paren content col " . l:pcol | endif
+      return l:pcol
     endif
   endif
 
@@ -429,22 +499,45 @@ function GetSystemVerilogIndent()
     endwhile
     if vverb | echom vverb_str "De-indent after endcase in one-line block (col " . ind . ")" | endif
 
+  " ---- multi-line case-item label list — keep siblings at case-body level -
+  " A bare label line ending in ',' (e.g. `NS_GREEN,`) inside a case block:
+  " the following line (another label, or `label: stmt`) stays at the same
+  " indent instead of being treated as an open-statement continuation (which
+  " would add +offset).  The ',' is a case-item separator, not an operator.
+  " The [^=;(){}] class excludes assignments, concat/aggregate items, and
+  " function-call/port continuations — only plain label lists match.
+  elseif last_line =~ '^\s*[^=;(){}]*,\s*' . sv_comment . '*$' &&
+   \ last_line !~ '^\s*//' && s:InCase(v:lnum)
+    let ind = indent(lnum)
+    let s:open_statement = 0
+    if vverb | echom vverb_str "Align to case-item label continuation (col " . ind . ")." | endif
+
   " ---- close statement — last continuation line ends with ; ---------------
   " Scan back past all continuation lines to restore the pre-continuation
   " indent (handles both +offset and assignment-aligned continuations).
+  " A case-item label line as last_line2 (e.g. `NS_GREEN,` above `EW_GREEN:
+  " stmt;`) is NOT a real continuation — skip so the next label stays put.
   elseif last_line =~ ')*\s*;\s*' . sv_comment . '*$' &&
    \ last_line !~ '^\s*)*\s*;\s*' . sv_comment . '*$' &&
    \ last_line !~ '\(//\|/\*\).*\S)*\s*;\s*' . sv_comment . '*$' &&
    \ ( last_line2 =~ sv_openstat . '\s*' . sv_comment . '*$' &&
    \   last_line2 !~ '^\s*//' &&
    \   last_line2 !~ ';\s*\(//.*\)\?$') &&
-   \ last_line2 !~ '^\s*' . sv_comment . '$'
+   \ last_line2 !~ '^\s*' . sv_comment . '$' &&
+   \ !( last_line2 =~ '^\s*[^=;(){}]*,\s*' . sv_comment . '*$' && s:InCase(v:lnum) )
     let l:scan = lnum
     while 1
       let l:prev = prevnonblank(l:scan - 1)
       if l:prev == 0 | break | endif
       let l:pl = getline(l:prev)
-      if l:pl =~ sv_openstat . '\s*' . sv_comment . '*$' &&
+      " A line ending in a bare { or ( opens a new indent level (struct/enum
+      " body, concat, port list).  The statement above belongs to that level,
+      " not to the line before the opener — stop and use opener + offset.
+      if l:pl =~ '[{(]\s*' . sv_comment . '*$' &&
+       \ l:pl !~ '\(//\|/\*\).*[{(]'
+        let ind = indent(l:prev) + offset
+        break
+      elseif l:pl =~ sv_openstat . '\s*' . sv_comment . '*$' &&
        \ l:pl !~ '^\s*//' &&
        \ l:pl !~ '\(//\|/\*\).*' . sv_openstat . '\s*$'
         let l:scan = l:prev
@@ -516,12 +609,44 @@ function GetSystemVerilogIndent()
     let s:open_statement = 0
     if vverb | echom vverb_str "De-indent end to matching begin (col " . ind . ")" | endif
 
-  " ---- join*/end* — de-indent ----------------------------------------------
-  elseif curr_line =~ '^\s*\<\(join\|join_any\|join_none\)\>' ||
-      \ curr_line =~ '^\s*\<\(endfunction\|endtask\|endspecify\|endclass\)\>' ||
+  " ---- endfunction/endclass/etc. — scan back to matching opener keyword ----
+  " Aligns to the opener's column regardless of whether the body used an
+  " explicit begin/end wrapper (whose 'end' sits at opener level, so a blind
+  " -offset would overshoot).  Depth-counts nested same-kind blocks.  Prototype
+  " lines (extern/pure/import/export) are skipped — they have no matching end.
+  elseif curr_line =~ '^\s*\<\(endfunction\|endtask\|endspecify\|endclass\)\>' ||
       \ curr_line =~ '^\s*\<\(endpackage\|endsequence\|endclocking\|endinterface\)\>' ||
       \ curr_line =~ '^\s*\<endgenerate\>' ||
       \ curr_line =~ '^\s*\<\(endgroup\|endproperty\|endchecker\|endprogram\)\>'
+    let l:ek  = matchstr(curr_line, '\<end\w\+\>')
+    let l:map = {'endfunction':'function','endtask':'task','endspecify':'specify',
+      \ 'endclass':'class','endpackage':'package','endsequence':'sequence',
+      \ 'endclocking':'clocking','endinterface':'interface','endgenerate':'generate',
+      \ 'endgroup':'covergroup','endproperty':'property','endchecker':'checker',
+      \ 'endprogram':'program'}
+    let l:ok  = get(l:map, l:ek, '')
+    let l:opn = '^\s*\%(\w\+\s*:\s*\)\=' .
+      \ '\%(\%(virtual\|pure\|static\|automatic\|local\|protected\|default\|rand\)\s\+\)*' .
+      \ '\<' . l:ok . '\>'
+    let l:ln    = v:lnum
+    let l:depth = 0
+    let l:found = 0
+    while l:ln > 1
+      let l:ln -= 1
+      let l:gl  = getline(l:ln)
+      if l:gl =~ '^\s*\<' . l:ek . '\>'
+        let l:depth += 1
+      elseif l:gl =~ l:opn && l:gl !~ '\<\(extern\|pure\|import\|export\)\>'
+        if l:depth == 0 | let ind = indent(l:ln) | let l:found = 1 | break | endif
+        let l:depth -= 1
+      endif
+    endwhile
+    if !l:found | let ind = ind - offset | endif
+    let s:open_statement = 0
+    if vverb | echom vverb_str "De-indent " . l:ek . " to opener (col " . ind . ")" | endif
+
+  " ---- join* — de-indent ---------------------------------------------------
+  elseif curr_line =~ '^\s*\<\(join\|join_any\|join_none\)\>'
     let ind = ind - offset
     if vverb | echom vverb_str "De-indent the end of a block." | endif
     if s:open_statement == 1
@@ -594,9 +719,15 @@ function GetSystemVerilogIndent()
 
   " ---- standalone begin — de-indent when preceded by a block declarator ---
   " Does NOT de-indent when preceded by fork/end/join* (parallel blocks),
-  " or function/task/module/etc. (they already added +offset for their block).
+  " or module/class/etc. (they already added +offset for their block).
   elseif curr_line =~ '^\s*\<begin\>'
-    if last_line !~ '^\s*\<\(function\|task\|specify\|module\|class\|package\|fork\)\>' &&
+    " begin directly after a single-line function/task header aligns with the
+    " function/task keyword (the body inside begin/end then gets +offset).
+    if last_line =~ '^\s*\%(\%(virtual\|pure\s\+virtual\|static\|automatic\|local\|protected\)\s\+\)*\<\(function\|task\)\>'
+      let ind = indent(lnum)
+      let s:open_statement = 0
+      if vverb | echom vverb_str "Align begin with function/task keyword." | endif
+    elseif last_line !~ '^\s*\<\(function\|task\|specify\|module\|class\|package\|fork\)\>' &&
       \ last_line !~ '^\s*\<\(sequence\|clocking\|interface\|covergroup\|generate\)\>' &&
       \ last_line !~ '^\s*\<\(property\|checker\|program\)\>' &&
       \ last_line !~ '^\s*\<\(end\|join\|join_any\|join_none\|endcase\)\>' &&
